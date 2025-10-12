@@ -46,3 +46,24 @@ tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-parameters")
 }
+
+tasks.register<Copy>("copyFrontend") {
+    dependsOn(":frontend:build")
+    from(project(":frontend").layout.buildDirectory.dir("dist"))
+    into(layout.buildDirectory.dir("resources/main/META-INF/resources"))
+}
+
+tasks.named("processResources") {
+    dependsOn("copyFrontend")
+}
+
+tasks.register<Exec>("setNativeProperties") {
+    System.setProperty("quarkus.native.enabled", "true")
+    System.setProperty("quarkus.package.jar.enabled", "false")
+}
+
+tasks.register<Exec>("fullNativeBuild") {
+    dependsOn("copyFrontend", "setNativeProperties", "quarkusBuild")
+    group = "build"
+    description = "Build native executable with embedded frontend"
+}

@@ -1,0 +1,818 @@
+= Tech Watch Application (MVT)
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: highlightjs
+:sectnums:
+
+== Project Overview
+
+=== Purpose
+
+This application enables managing the complete lifecycle of a *Tech Watch Minute (MVT - Minute Veille Techno)*:
+
+* *Collect* links from the web (manually or via browser extension)
+* *Sort* and categorize relevant links
+* *Summarize* content automatically using LLM models
+* *Generate* export-ready outputs for publication
+* *Archive* complete MVT history
+
+The application runs *entirely locally*, with SQLite for persistence and ChromaDB for semantic search.
+
+=== Key Features
+
+* Browser extension for instant link collection
+* Automatic MVT cycle management (auto-creation when complete or after 10 links)
+* LLM-powered summarization (local or cloud models)
+* Dynamic category organization
+* Export to plain text format (Confluence-ready)
+* Semantic and classic search capabilities
+* Complete rejection registry to prevent duplicate imports
+
+---
+
+== Architecture
+
+=== Project Structure
+
+----
+.
+├── backend/                # REST API (Quarkus + Java 21)
+├── frontend/               # User Interface (React + Vite)
+├── browser-extension/      # Browser Extension (Chrome/Opera)
+└── docs/                   # Documentation
+----
+
+=== Technology Stack
+
+[cols="1,2"]
+|===
+|Component |Technologies
+
+|*Backend*
+|Quarkus, Jakarta EE, SQLite, ChromaDB
+
+|*Frontend*
+|React 19.1.1, Vite 7.1.7, React Router 7.9.3, Axios 1.12.2
+
+|*Extension*
+|Webpack 5.102.0, Web Extensions API (Manifest V3)
+
+|*Build System*
+|Gradle (Kotlin DSL)
+
+|*Runtime*
+|Java 21, Node.js 18+
+|===
+
+---
+
+== Development Environment Setup
+
+=== Prerequisites
+
+Ensure the following are installed on your system:
+
+* *Java 21* (JDK)
+* *Node.js* 18+ with npm
+* *Git*
+
+=== Step 1: Clone the Repository
+
+[source,bash]
+----
+git clone <repository-url>
+cd <project-name>
+----
+
+=== Step 2: Backend Setup
+
+[source,bash]
+----
+cd backend
+./gradlew quarkusDev
+----
+
+The backend will start on *http://localhost:8080*
+
+NOTE: On Windows, use `gradlew.bat` instead of `./gradlew`
+
+=== Step 3: Frontend Setup
+
+Open a new terminal:
+
+[source,bash]
+----
+cd frontend
+npm install
+npm run dev
+----
+
+The frontend will start on *http://localhost:5173*
+
+=== Step 4: Browser Extension Setup
+
+Open another terminal:
+
+[source,bash]
+----
+cd browser-extension
+npm install
+npm run watch
+----
+
+The extension is compiled to `browser-extension/dist/` and automatically rebuilds on file changes.
+
+IMPORTANT: Ensure you have created all required files before running:
+
+* `src/background.js`
+* `src/popup.js`
+* `src/popup.html`
+* `src/options.js`
+* `src/options.html`
+* `src/manifest.json`
+* `src/icons/` directory with icon16.png, icon48.png, icon128.png
+
+==== Loading the Extension for Testing
+
+*For Google Chrome:*
+
+. Open Chrome and navigate to `chrome://extensions/`
+. Enable *Developer mode* (toggle in top-right corner)
+. Click *Load unpacked*
+. Select the `browser-extension/dist/` folder
+. The extension appears in your toolbar
+. Click the reload icon on the extension card after each rebuild
+
+*For Opera:*
+
+. Open Opera and navigate to `opera://extensions/`
+. Enable *Developer mode* (toggle in top-right corner)
+. Click *Load unpacked extension*
+. Select the `browser-extension/dist/` folder
+. The extension appears in your toolbar
+. Click the reload icon on the extension card after each rebuild
+
+TIP: When running in watch mode (`npm run watch`), changes are automatically rebuilt. You only need to click the reload button on the extension card in your browser to see updates - no need to remove and re-add the extension.
+
+---
+
+== Building for Production
+
+=== Backend Build
+
+[source,bash]
+----
+cd backend
+./gradlew build
+----
+
+Output location: `backend/build/quarkus-app/`
+
+The executable JAR is: `backend/build/quarkus-app/quarkus-run.jar`
+
+=== Frontend Build
+
+[source,bash]
+----
+cd frontend
+npm run build
+----
+
+Output location: `frontend/dist/`
+
+Static files are optimized and ready for deployment.
+
+=== Browser Extension Build
+
+[source,bash]
+----
+cd browser-extension
+npm run build
+----
+
+Output location: `browser-extension/dist/`
+
+The extension is packaged and ready for distribution.
+
+=== Complete Build (All Modules)
+
+Build everything from the project root:
+
+[source,bash]
+----
+./gradlew build
+----
+
+This compiles:
+
+* Backend → `backend/build/quarkus-app/`
+* Frontend → `frontend/dist/`
+* Extension → `browser-extension/dist/`
+
+=== Production Build Process Explained
+
+When you run `./gradlew buildAll`, the following happens in order:
+
+. *Frontend Build*
+- Runs `npm run build` in the `frontend/` directory
+- Compiles React application with Vite
+- Outputs optimized static files to `frontend/dist/`
+- TypeScript type checking is performed (requires `tsc` from npm dependencies)
+
+. *Extension Build*
+- Runs `npm run build` in the `browser-extension/` directory
+- Webpack bundles JavaScript files
+- Copies manifest.json, HTML files, and icons to `browser-extension/dist/`
+- Creates a production-ready extension package
+
+. *Backend Build*
+- Automatically runs `copyFrontend` task first
+- Copies `frontend/dist/` contents to `backend/build/resources/main/META-INF/resources/`
+- Compiles Java backend with Quarkus
+- Packages everything into `backend/build/quarkus-app/quarkus-run.jar`
+- The JAR now contains both the API and the web frontend
+
+Result: A single JAR file that serves both the backend API and frontend UI from http://localhost:8080
+
+=== Building Native Executable (Advanced)
+
+To build a native executable with embedded frontend:
+
+[source,bash]
+----
+cd backend
+./gradlew buildNative
+----
+
+IMPORTANT: This requires GraalVM to be installed and configured.
+
+==== What This Command Does
+
+. Builds the frontend (`npm run build` in `frontend/`)
+. Copies frontend assets to `backend/build/resources/main/META-INF/resources/`
+. Compiles the backend to a native executable using GraalVM's `native-image`
+. Embeds all resources (including frontend) into the native binary
+
+The native executable will be created in `backend/build/` with a name like `techwatch-1.0.0-SNAPSHOT-runner` (or `.exe` on Windows).
+
+==== Requirements
+
+* *GraalVM 21+* with native-image tool installed
++
+[source,bash]
+----
+# Verify GraalVM installation
+java -version  # Should show GraalVM
+native-image --version  # Should work
+----
+
+* *C++ compiler*
+- Windows: Visual Studio Build Tools 2019 or later
+- Linux: gcc and glibc-devel
+- macOS: Xcode Command Line Tools
+
+* *Sufficient RAM*: 8GB minimum, 16GB recommended
+
+* *Build time*: 5-15 minutes depending on your system
+
+==== Frontend Integration in Native Build
+
+The build process ensures the frontend is properly embedded:
+
+[source,bash]
+----
+# The copyFrontend task runs automatically
+# It copies from:  frontend/dist/
+# To:              backend/build/resources/main/META-INF/resources/
+
+# This means the native executable contains:
+# - Backend API endpoints at /api/*
+# - Frontend UI at / (root)
+----
+
+CAUTION: Native images are platform-specific. A native executable built on Windows only runs on Windows. Build on the target platform.
+
+==== Running the Native Executable
+
+[source,bash]
+----
+# On Windows
+cd backend\build
+techwatch-1.0.0-SNAPSHOT-runner.exe
+
+# On Linux/Mac
+cd backend/build
+./techwatch-1.0.0-SNAPSHOT-runner
+----
+
+The application starts in under 1 second and uses significantly less memory than the JVM version.
+
+
+---
+
+== Windows Installation Guide
+
+=== Application Installation
+
+==== Option A: Run with Java Runtime
+
+Verify Java 21 is installed:
+
+[source,cmd]
+----
+java -version
+----
+
+Start the backend:
+
+[source,cmd]
+----
+cd backend\build\quarkus-app
+java -jar quarkus-run.jar
+----
+
+The backend API is now available at *http://localhost:8080*
+
+==== Option B: Native Executable (Optional)
+
+If you have GraalVM installed, you can build a native executable:
+
+[source,bash]
+----
+cd backend
+./gradlew build -Dquarkus.package.type=native
+----
+
+The native executable will be generated in `backend/build/`
+
+NOTE: Native compilation requires GraalVM and native-image tool installation.
+
+=== Frontend Deployment
+
+==== Option A: Serve with Static Server
+
+[source,cmd]
+----
+cd frontend\dist
+npx serve -s . -p 3000
+----
+
+Access the application at *http://localhost:3000*
+
+==== Option B: Integrate with Backend
+
+. Copy contents of `frontend/dist/` to `backend/src/main/resources/META-INF/resources/`
+. Rebuild the backend
+. Access the application at *http://localhost:8080*
+
+This option serves both API and UI from a single port.
+
+---
+
+== Browser Extension Deployment
+
+=== Google Chrome
+
+. Open Chrome and navigate to `chrome://extensions/`
+. Enable *Developer mode* (toggle in top-right corner)
+. Click *Load unpacked*
+. Select the `browser-extension/dist/` folder
+. The extension appears in your toolbar
+
+=== Opera
+
+. Open Opera and navigate to `opera://extensions/`
+. Enable *Developer mode* (toggle in top-right corner)
+. Click *Load unpacked*
+. Select the `browser-extension/dist/` folder
+. The extension appears in your toolbar
+
+=== Extension Configuration
+
+On first launch:
+
+. Click the extension icon
+. Configure the local API URL (default: `http://localhost:8080`)
+. The extension is ready to send links to the application
+
+=== Publishing to Extension Stores (Optional)
+
+==== Chrome Web Store
+
+. Compress the `browser-extension/dist/` folder as a `.zip` file
+. Create a developer account on https://chrome.google.com/webstore/devconsole[Chrome Web Store Developer Dashboard]
+. Upload the `.zip` file and follow submission guidelines
+. Wait for review and approval
+
+==== Opera Add-ons
+
+Opera accepts Chrome extensions natively. You can:
+
+* Use the extension directly in developer mode
+* Submit to https://addons.opera.com/developer/[Opera Add-ons] for distribution
+
+---
+
+== Usage Guide
+
+=== Typical Workflow
+
+[cols="1,3"]
+|===
+|Step |Action
+
+|1. *Collect*
+|Browse the web and click the extension icon to add links
+
+|2. *Sort*
+|In the web interface, classify links (To Process / Keep / Reject)
+
+|3. *Organize*
+|Create categories and associate them with links
+
+|4. *Summarize*
+|(With LLM) Generate automatic summaries
+
+|5. *Export*
+|Generate a text export ready for publication
+
+|6. *Archive*
+|Complete the MVT and start a new one
+|===
+
+=== LLM Configuration
+
+The application supports:
+
+* *Local models* (via Ollama, LM Studio, etc.)
+* *Cloud APIs* (OpenAI, Anthropic, etc.)
+
+Configure endpoints and API keys in the application settings interface.
+
+---
+
+== Database Structure
+
+The application uses a dual-storage approach:
+
+[cols="1,2,2"]
+|===
+|Component |Technology |Purpose
+
+|*Operational Data*
+|SQLite
+|Links, MVTs, summaries, rejections, configuration +
+File: `backend/data/mvt.db`
+
+|*Semantic Search*
+|ChromaDB
+|Vector embeddings for semantic search +
+Directory: `backend/data/chromadb/`
+|===
+
+---
+
+== Development Scripts
+
+=== Full Development Mode
+
+[source,bash]
+----
+# Backend in dev mode
+./gradlew quarkusDev
+
+# Frontend in dev mode
+npm --prefix frontend run dev
+
+# Extension in watch mode
+npm --prefix browser-extension run watch
+----
+
+=== Testing
+
+[source,bash]
+----
+# Backend tests
+./gradlew test
+
+# Frontend tests
+npm --prefix frontend run test
+----
+
+=== Cleanup
+
+[source,bash]
+----
+# Clean all modules
+./gradlew clean
+
+# Clean specific module
+./gradlew :backend:clean
+./gradlew :frontend:clean
+./gradlew :browser-extension:clean
+----
+
+---
+
+== Troubleshooting
+
+=== Backend won't start
+
+* Verify Java 21 is installed: `java -version`
+* Check if port 8080 is available
+* Review logs in `backend/logs/`
+
+=== Frontend can't connect to backend
+
+* Ensure backend is running on `http://localhost:8080`
+* Check CORS configuration in `backend/src/main/resources/application.properties`
+* Verify no firewall is blocking the connection
+
+=== Extension can't send links
+
+* Verify the API URL in extension settings
+* Ensure backend is running and accessible
+* Check browser console for errors (F12)
+
+=== Database issues
+
+* SQLite file location: `backend/data/mvt.db`
+* ChromaDB directory: `backend/data/chromadb/`
+* Backup these folders before major updates
+
+=== Extension Issues
+
+*Extension won't load*
+
+* Verify all required files exist in `browser-extension/dist/`:
+- `manifest.json`
+- `background.js`
+- `popup.html`
+- `popup.js`
+- `options.html`
+- `options.js`
+- `icons/` directory with icon16.png, icon48.png, icon128.png
+
+* Check browser console (F12) on the extensions page for errors
+* Look for red error messages in the extension card
+
+*Build errors: "Module not found" or "unable to locate glob"*
+
+This means source files are missing. You need to create them first:
+
+[source,bash]
+----
+browser-extension/src/
+├── background.js       ⚠️ MUST EXIST
+├── popup.js            ⚠️ MUST EXIST
+├── popup.html          ⚠️ MUST EXIST
+├── options.js          ⚠️ MUST EXIST
+├── options.html        ⚠️ MUST EXIST
+├── manifest.json       ✓ Already exists
+├── config.js           ✓ Already exists
+└── icons/              ⚠️ MUST EXIST
+    ├── icon16.png      ⚠️ REQUIRED
+    ├── icon48.png      ⚠️ REQUIRED
+    └── icon128.png     ⚠️ REQUIRED
+----
+
+Create all missing files as specified in the project setup documentation.
+
+ icons, you can:
+
+* Create simple colored squares using any image editor
+* Download free icons from https://www.flaticon.com/[Flaticon] or https://www.iconfinder.com/[IconFinder]
+* Use online icon generators like https://realfavicongenerator.net/[RealFaviconGenerator]
+
+*"Missing script: watch" error*
+
+Your `package.json` is outdated. Update it with:
+
+[source,json]
+----
+{
+  "scripts": {
+    "build": "webpack --mode production",
+    "watch": "webpack --mode development --watch",
+    "dev": "webpack --mode development --watch"
+  }
+}
+----
+
+Then run:
+
+[source,bash]
+----
+cd browser-extension
+npm install
+npm run watch
+----
+
+*Extension can't connect to backend*
+
+. Verify the backend is running:
++
+[source,bash]
+----
+curl http://localhost:8080/q/health
+# Should return: {"status":"UP"}
+----
+
+. Check extension settings:
+- Click extension icon
+- Click "Settings"
+- Verify API URL is `http://localhost:8080`
+- Click "Save Settings"
+
+. Check browser console (F12 while on popup) for CORS or network errors
+
+. Verify CORS is properly configured in `backend/src/main/resources/application.yml`:
++
+[source,yaml]
+----
+greeting:
+  http:
+    cors:
+      origins: "http://localhost:3000,chrome-extension://*,moz-extension://*"
+----
+
+*Extension popup shows blank or won't open*
+
+. Right-click the extension icon → Inspect popup
+. Check the console for JavaScript errors
+. Common issues:
+- Missing `popup.js` script tag in `popup.html`
+- Syntax errors in `popup.js`
+- Chrome storage API not accessible (check permissions in manifest)
+
+*Changes to extension not showing*
+
+. After rebuild (watch mode), click the reload icon on the extension card in `chrome://extensions/`
+. If that doesn't work:
+- Remove the extension completely
+- Close all browser windows
+- Reopen browser
+- Load the extension again from `browser-extension/dist/`
+
+=== Frontend Issues
+
+*Frontend shows blank page at localhost:3000*
+
+. Verify backend is running on port 8080:
++
+[source,bash]
+----
+curl http://localhost:8080/q/health
+----
+
+. Check Vite console output for errors
+. Check browser console (F12) for JavaScript errors
+. Verify proxy configuration in `frontend/vite.config.js`:
++
+[source,javascript]
+----
+server: {
+    port: 3000,
+    proxy: {
+        '/api': {
+            target: 'http://localhost:8080',
+            changeOrigin: true,
+        }
+    }
+}
+----
+
+*"Connection refused" or proxy errors*
+
+. Backend must be running BEFORE starting frontend
+. Start order:
+.. `./gradlew :backend:quarkusDev` (wait for "Listening on: http://0.0.0.0:8080")
+.. `npm run dev` in frontend directory
+
+. If backend is running, check firewall settings
+
+*"tsc not found" error during build*
+
+TypeScript Compiler is missing. Install dependencies:
+
+[source,bash]
+----
+cd frontend
+npm install
+----
+
+This installs TypeScript as a dev dependency. The `tsc` command is part of the Node.js project, not a system-wide tool.
+
+If the error persists:
+
+[source,bash]
+----
+# Verify TypeScript is installed
+npm list typescript
+
+# If not found, install explicitly
+npm install --save-dev typescript
+
+# Then rebuild
+npm run build
+----
+
+*Port 3000 already in use*
+
+Another application is using port 3000. Options:
+
+. Stop the other application
+. Change Vite port in `frontend/vite.config.js`:
++
+[source,javascript]
+----
+server: {
+    port: 3001,  // Change this
+    // ...
+}
+----
+
+. Find and kill the process:
++
+[source,bash]
+----
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+
+# Linux/Mac
+lsof -i :3000
+kill -9 <PID>
+----
+
+*Frontend works in dev but not in production JAR*
+
+. Verify frontend was built before backend:
++
+[source,bash]
+----
+./gradlew clean buildAll
+----
+
+. Check `backend/build/resources/main/META-INF/resources/` contains frontend files
+. Access the app at `http://localhost:8080` (not 3000) when running from JAR
+. In production, there is NO separate frontend server - everything is served from port 8080
+
+
+---
+
+== Development Roadmap
+
+=== V1.0 (Current)
+* Manual and browser-based link collection
+* Automatic MVT lifecycle management
+* LLM summarization (local/cloud)
+* Classic search
+* Text export
+
+=== V1.1 (Planned)
+* Advanced sorting and filtering
+* Free tags
+* Manual purge of rejected links
+* Batch summarization
+
+=== V1.2 (Future)
+* Import from Confluence/Notion
+* Enhanced semantic search
+* Custom export templates
+
+=== V2.0+ (Long-term)
+* Network synchronization
+* Multi-user collaboration
+* Cloud deployment options
+
+See `plan.md` for detailed iteration planning.
+
+---
+
+== Contributing
+
+This project follows an iterative development approach. Please refer to `plan.md` and `specs.md` for detailed specifications and planned features.
+
+=== Code Style
+
+* *Java*: Follow standard Java conventions
+* *JavaScript/React*: ESLint configuration in `frontend/eslint.config.js`
+* *Commit messages*: Use conventional commits format
+
+---
+
+== License
+
+[To be defined]
+
+---
+
+== Support
+
+For questions, issues, or feature requests, please open an issue on the project repository.
+
+---
+
+_Last updated: 2025-10-12_
