@@ -1,4 +1,4 @@
-package com.monprojet.api;
+package org.jaalon.api;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;

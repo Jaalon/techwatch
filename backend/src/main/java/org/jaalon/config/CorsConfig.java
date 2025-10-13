@@ -1,4 +1,4 @@
-package com.monprojet.config;
+package org.jaalon.config;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
