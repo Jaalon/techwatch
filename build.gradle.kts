@@ -20,13 +20,13 @@ tasks.register("devAll") {
         println("To run in development mode, open 3 terminals and run:")
         println("  Terminal 1: ./gradlew :backend:quarkusDev")
         println("  Terminal 2: ./gradlew :frontend:dev")
-        println("  Terminal 3: ./gradlew :browser-extension:watch")
+        println("  Terminal 3: ./gradlew :browser-extension:dev")
     }
 }
 
 
 tasks.register("dev") {
-    dependsOn(":backend:quarkusDev", ":frontend:frontendDev", ":browser-extension:frontendDev")
+    dependsOn(":backend:quarkusDev", ":frontend:dev", ":browser-extension:dev")
 }
 
 tasks.register("prodBuild") {

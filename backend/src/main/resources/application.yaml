@@ -1,0 +1,44 @@
+greeting:
+  message: "hello"
+  http:
+    port: 8080
+    cors:
+      ~: true
+      origins: "http://localhost:3000,chrome-extension://*,moz-extension://*"
+      methods: "GET,POST,PUT,DELETE,OPTIONS"
+      headers: "Content-Type,Authorization"
+      exposed-headers: "Content-Disposition"
+      access-control-max-age: 24H
+    root-path: /
+    static-resources:
+      enable: true
+  native:
+    additional-build-args: "--initialize-at-run-time=org.h2.Driver"
+  smallrye-openapi:
+    path: /swagger
+quarkus:
+  http:
+    port: 8080
+    cors:
+      enabled: true
+      origins: "*"
+  smallrye-openapi:
+    path: /openapi
+  datasource:
+    db-kind: h2
+    jdbc:
+      url: jdbc:h2:file:./var/techwatch
+      driver: org.h2.Driver
+    username: sa
+    password: ""
+
+  hibernate-orm:
+    dialect: org.hibernate.dialect.H2Dialect
+  log:
+    level: INFO
+    category:
+      "org.hibernate.SQL":
+        level: INFO
+  liquibase:
+    migrate-at-start: true
+    change-log: db/changelog/db.changelog-master.yaml

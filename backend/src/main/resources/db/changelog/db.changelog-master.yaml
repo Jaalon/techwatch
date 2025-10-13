@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-create-link-table
+      author: junie
+      changes:
+        - createTable:
+            tableName: link
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(250)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: url
+                  type: VARCHAR(1000)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: description
+                  type: VARCHAR(4000)
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addAutoIncrement:
+            tableName: link
+            columnName: id
+            columnDataType: BIGINT
+        - createIndex:
+            tableName: link
+            indexName: idx_link_status
+            columns:
+              - column:
+                  name: status
+
+  - changeSet:
+      id: 2-create-link-sequence
+      author: junie
+      changes:
+        - createSequence:
+            sequenceName: Link_SEQ
+            startValue: 1
+            incrementBy: 50

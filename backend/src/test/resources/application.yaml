@@ -1,0 +1,13 @@
+quarkus:
+  http:
+  hibernate-orm:
+    database:
+      generation: drop-and-create
+    dialect: org.hibernate.dialect.H2Dialect
+  datasource:
+    db-kind: h2
+    jdbc:
+      url: jdbc:h2:mem:techwatch;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+      driver: org.h2.Driver
+    username: sa
+    password: sa

@@ -27,7 +27,7 @@ val buildFront = tasks.register<Exec>("buildFront") {
     onlyIf { project.file("package.json").exists() }
 }
 
-val watch = tasks.register<Exec>("watch") {
+val dev = tasks.register<Exec>("dev") {
     dependsOn(npmInstall)
     group = "development"
     description = "Build browser extension in watch mode"

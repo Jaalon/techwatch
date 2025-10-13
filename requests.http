@@ -1,0 +1,36 @@
+### Techwatch API requests
+# Base URL (Quarkus default): http://localhost:8080
+
+### List links (all)
+GET http://localhost:8080/api/links
+Accept: application/json
+
+### List links filtered by status
+GET http://localhost:8080/api/links?status=TO_PROCESS&page=0&size=20
+Accept: application/json
+
+### Create a link
+POST http://localhost:8080/api/links
+Content-Type: application/json
+
+{
+  "title": "A great article",
+  "url": "https://example.com/great-article",
+  "description": "Quick summary of the article"
+}
+
+### Get a link by id
+GET http://localhost:8080/api/links/1
+Accept: application/json
+
+### Update a link (change status, title)
+PUT http://localhost:8080/api/links/1
+Content-Type: application/json
+
+{
+  "status": "KEEP",
+  "title": "A great article (UPDATED)"
+}
+
+### Delete a link
+DELETE http://localhost:8080/api/links/1
