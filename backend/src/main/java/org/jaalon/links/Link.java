@@ -1,6 +1,7 @@
 package org.jaalon.links;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -31,4 +32,10 @@ public class Link extends PanacheEntity {
 
     @NotNull
     public Instant date = Instant.now();
+
+    // Expose discoveredAt in JSON while keeping persisted field name as 'date'
+    @JsonProperty("discoveredAt")
+    public Instant getDiscoveredAt() {
+        return date;
+    }
 }

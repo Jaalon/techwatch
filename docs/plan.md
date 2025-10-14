@@ -12,12 +12,12 @@ Chaque tâche apporte une **fonctionnalité immédiatement utilisable** dans le 
 🎯 *Objectif : centraliser et classer les liens à la main pour amorcer le cycle de veille sans automatisation.*
 
 ### Fonctionnalités livrées
-- [ ] Initialisation du projet (backend + frontend + base locale)
+- [x] Initialisation du projet (backend + frontend + base locale)
   - Setup backend (API REST + base SQLite fichier pour données opérationnelles; H2 réservé aux tests)
   - Setup frontend minimal (UI locale)
   - Modèle `Lien` (id, titre, URL, description, statut, date)
   - Endpoint `/links` (CRUD complet)
-- [ ] Interface de collecte manuelle
+- [x] Interface de collecte manuelle
   - Formulaire “Ajouter un lien” (titre, URL, description)
   - Liste des liens avec statut “À traiter”
   - Actions : Garder / Plus tard / Rejeter / Supprimer

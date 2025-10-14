@@ -1,12 +1,48 @@
 ### Techwatch API requests
 # Base URL (Quarkus default): http://localhost:8080
 
-### List links (all)
+###
+### 📋 LINKS CRUD
+###
+
+### List all links
 GET http://localhost:8080/api/links
 Accept: application/json
 
-### List links filtered by status
-GET http://localhost:8080/api/links?status=TO_PROCESS&page=0&size=20
+### List links with pagination
+GET http://localhost:8080/api/links?page=0&size=20
+Accept: application/json
+
+### List links filtered by status - TO_PROCESS
+GET http://localhost:8080/api/links?status=TO_PROCESS
+Accept: application/json
+
+### List links filtered by status - KEEP
+GET http://localhost:8080/api/links?status=KEEP
+Accept: application/json
+
+### List links filtered by status - LATER
+GET http://localhost:8080/api/links?status=LATER
+Accept: application/json
+
+### List links filtered by status - REJECT
+GET http://localhost:8080/api/links?status=REJECT
+Accept: application/json
+
+### Search links by query (title, url or description)
+GET http://localhost:8080/api/links?q=article
+Accept: application/json
+
+### Search with status filter
+GET http://localhost:8080/api/links?q=article&status=KEEP
+Accept: application/json
+
+### Search with pagination
+GET http://localhost:8080/api/links?q=great&page=0&size=10
+Accept: application/json
+
+### Get a link by id
+GET http://localhost:8080/api/links/2
 Accept: application/json
 
 ### Create a link
@@ -19,18 +55,79 @@ Content-Type: application/json
   "description": "Quick summary of the article"
 }
 
-### Get a link by id
-GET http://localhost:8080/api/links/1
-Accept: application/json
+### Create a link - minimal (without description)
+POST http://localhost:8080/api/links
+Content-Type: application/json
 
-### Update a link (change status, title)
+{
+  "title": "Another article",
+  "url": "https://example.com/another-article"
+}
+
+### Update a link - change status to KEEP
 PUT http://localhost:8080/api/links/1
 Content-Type: application/json
 
 {
-  "status": "KEEP",
-  "title": "A great article (UPDATED)"
+  "status": "KEEP"
+}
+
+### Update a link - change status to LATER
+PUT http://localhost:8080/api/links/1
+Content-Type: application/json
+
+{
+  "status": "LATER"
+}
+
+### Update a link - change status to REJECT
+PUT http://localhost:8080/api/links/1
+Content-Type: application/json
+
+{
+  "status": "REJECT"
+}
+
+### Update a link - change title
+PUT http://localhost:8080/api/links/1
+Content-Type: application/json
+
+{
+  "title": "Updated title"
+}
+
+### Update a link - change multiple fields
+PUT http://localhost:8080/api/links/1
+Content-Type: application/json
+
+{
+  "title": "Updated title",
+  "description": "Updated description",
+  "status": "KEEP"
 }
 
 ### Delete a link
-DELETE http://localhost:8080/api/links/1
+DELETE http://localhost:8080/api/links/1602
+
+###
+### 🏥 QUARKUS ENDPOINTS
+###
+
+### Health check
+GET http://localhost:8080/q/health
+Accept: application/json
+
+### Health check - liveness
+GET http://localhost:8080/q/health/live
+Accept: application/json
+
+### Health check - readiness
+GET http://localhost:8080/q/health/ready
+Accept: application/json
+
+### OpenAPI specification
+GET http://localhost:8080/q/openapi
+Accept: application/json
+
+### Swagger UI (open in browser)
+GET http://localhost:8080/q/swagger-ui

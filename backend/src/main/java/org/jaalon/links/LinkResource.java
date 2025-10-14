@@ -27,11 +27,26 @@ public class LinkResource {
 
     @GET
     public Response list(@QueryParam("status") String status,
+                         @QueryParam("q") String q,
                          @QueryParam("page") @DefaultValue("0") int page,
-                         @QueryParam("size") @DefaultValue("20") int size) {
+                         @QueryParam("size") @DefaultValue("20") int size,
+                         @QueryParam("sort") @DefaultValue("date") String sortParam) {
         PanacheQuery<Link> query;
-        Sort sort = Sort.by("date").descending();
-        if (status != null && !status.isBlank()) {
+        Sort sort = mapSort(sortParam);
+        boolean hasStatus = status != null && !status.isBlank();
+        boolean hasQuery = q != null && !q.isBlank();
+
+        if (hasStatus && hasQuery) {
+            LinkStatus st;
+            try {
+                st = LinkStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Invalid status value");
+            }
+            // Case-insensitive search on title or description
+            String like = "%" + q.toLowerCase() + "%";
+            query = repository.find("status = ?1 and (lower(title) like ?2 or lower(description) like ?2)", sort, st, like);
+        } else if (hasStatus) {
             LinkStatus st;
             try {
                 st = LinkStatus.valueOf(status);
@@ -39,12 +54,28 @@ public class LinkResource {
                 throw new BadRequestException("Invalid status value");
             }
             query = repository.find("status = ?1", sort, st);
+        } else if (hasQuery) {
+            String like = "%" + q.toLowerCase() + "%";
+            query = repository.find("lower(title) like ?1 or lower(description) like ?1", sort, like);
         } else {
             query = repository.findAll(sort);
         }
         query.page(Page.of(page, size));
         List<Link> list = query.list();
         return Response.ok(list).header("X-Total-Count", query.count()).build();
+    }
+
+    private Sort mapSort(String sortParam) {
+        if (sortParam == null || sortParam.isBlank() || sortParam.equalsIgnoreCase("date")) {
+            return Sort.by("date").descending();
+        }
+        if (sortParam.equalsIgnoreCase("title")) {
+            return Sort.by("title").ascending();
+        }
+        if (sortParam.equalsIgnoreCase("source") || sortParam.equalsIgnoreCase("url")) {
+            return Sort.by("url").ascending();
+        }
+        throw new BadRequestException("Invalid sort value");
     }
 
     @GET
