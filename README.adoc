@@ -1,4 +1,4 @@
-= Tech Watch Application (MVT)
+= TechWatch Application
 :toc: left
 :toclevels: 3
 :icons: font
@@ -9,20 +9,20 @@
 
 === Purpose
 
-This application enables managing the complete lifecycle of a *Tech Watch Minute (MVT - Minute Veille Techno)*:
+This application enables managing the complete lifecycle of a *TechWatch*: 
 
 * *Collect* links from the web (manually or via browser extension)
 * *Sort* and categorize relevant links
 * *Summarize* content automatically using LLM models
 * *Generate* export-ready outputs for publication
-* *Archive* complete MVT history
+* *Archive* complete TechWatch history
 
 The application runs *entirely locally*, with SQLite for persistence and ChromaDB for semantic search.
 
 === Key Features
 
 * Browser extension for instant link collection
-* Automatic MVT cycle management (auto-creation when complete or after 10 links)
+* Automatic TechWatch cycle management (auto-creation when complete or after 10 links)
 * LLM-powered summarization (local or cloud models)
 * Dynamic category organization
 * Export to plain text format (Confluence-ready)
@@ -438,7 +438,7 @@ Opera accepts Chrome extensions natively. You can:
 |Generate a text export ready for publication
 
 |6. *Archive*
-|Complete the MVT and start a new one
+|Complete the TechWatch and start a new one
 |===
 
 === LLM Configuration
@@ -462,8 +462,8 @@ The application uses a dual-storage approach:
 
 |*Operational Data*
 |SQLite
-|Links, MVTs, summaries, rejections, configuration +
-File: `backend/data/mvt.db`
+|Links, TechWatchs, summaries, rejections, configuration +
+File: `backend/data/techwatch.db`
 
 |*Semantic Search*
 |ChromaDB
@@ -537,7 +537,7 @@ npm --prefix frontend run test
 
 === Database issues
 
-* SQLite file location: `backend/data/mvt.db`
+* SQLite file location: `backend/data/techwatch.db`
 * ChromaDB directory: `backend/data/chromadb/`
 * Backup these folders before major updates
 
@@ -766,7 +766,7 @@ kill -9 <PID>
 
 === V1.0 (Current)
 * Manual and browser-based link collection
-* Automatic MVT lifecycle management
+* Automatic TechWatch lifecycle management
 * LLM summarization (local/cloud)
 * Classic search
 * Text export

@@ -29,6 +29,10 @@ Accept: application/json
 GET http://localhost:8080/api/links?status=REJECT
 Accept: application/json
 
+### List links filtered by status - NEXT_TECHWATCH
+GET http://localhost:8080/api/links?status=NEXT_TECHWATCH
+Accept: application/json
+
 ### Search links by query (title, url or description)
 GET http://localhost:8080/api/links?q=article
 Accept: application/json
@@ -110,6 +114,41 @@ Content-Type: application/json
 DELETE http://localhost:8080/api/links/1602
 
 ###
+### 📄 TechWatch ENDPOINTS
+
+### List all TechWatch
+GET http://localhost:8080/api/techwatch
+Accept: application/json
+
+### Get active TechWatch
+GET http://localhost:8080/api/techwatch/active
+Accept: application/json
+
+### Create planned TechWatch (date required)
+POST http://localhost:8080/api/techwatch
+Content-Type: application/json
+
+{
+  "date": "2025-10-14"
+}
+
+### Activate a TechWatch
+POST http://localhost:8080/api/techwatch/1/activate
+
+### Complete a TechWatch
+POST http://localhost:8080/api/techwatch/1/complete
+
+### Collect NEXT_TECHWATCH links into active TechWatch
+POST http://localhost:8080/api/techwatch/1/collect-next-links
+
+### Set a link as NEXT_TECHWATCH
+PUT http://localhost:8080/api/links/1
+Content-Type: application/json
+
+{
+  "status": "NEXT_TECHWATCH"
+}
+
 ### 🏥 QUARKUS ENDPOINTS
 ###
 

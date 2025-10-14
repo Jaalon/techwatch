@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 1-create-link-table
+      id: 1-initial-schema
       author: junie
       changes:
         - createTable:
@@ -46,12 +46,53 @@ databaseChangeLog:
             columns:
               - column:
                   name: status
-
-  - changeSet:
-      id: 2-create-link-sequence
-      author: junie
-      changes:
+        - createTable:
+            tableName: techwatch
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+        - addAutoIncrement:
+            tableName: techwatch
+            columnName: id
+            columnDataType: BIGINT
+        - addColumn:
+            tableName: link
+            columns:
+              - column:
+                  name: techwatchId
+                  type: BIGINT
+        - addForeignKeyConstraint:
+            baseTableName: link
+            baseColumnNames: techwatchId
+            constraintName: fk_link_techwatch
+            referencedTableName: techwatch
+            referencedColumnNames: id
+            onDelete: SET NULL
+        - createIndex:
+            tableName: link
+            indexName: idx_link_techwatchId
+            columns:
+              - column:
+                  name: techwatchId
         - createSequence:
             sequenceName: Link_SEQ
+            startValue: 1
+            incrementBy: 50
+        - createSequence:
+            sequenceName: TechWatch_SEQ
             startValue: 1
             incrementBy: 50

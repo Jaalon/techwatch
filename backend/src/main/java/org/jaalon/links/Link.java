@@ -30,6 +30,9 @@ public class Link extends PanacheEntity {
     @Enumerated(EnumType.STRING)
     public LinkStatus status = LinkStatus.TO_PROCESS;
 
+    // Optional association to a TechWatch once attached
+    public Long techwatchId;
+
     @NotNull
     public Instant date = Instant.now();
 

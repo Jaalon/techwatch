@@ -2,11 +2,17 @@ import { useEffect, useState } from 'react'
 import './App.css'
 
 const API = '/api/links'
+const TECHWATCH_API = '/api/techwatch'
 
 function App() {
   const [links, setLinks] = useState([])
   const [form, setForm] = useState({ title: '', url: '', description: '' })
   const [error, setError] = useState('')
+
+  // TechWatch state
+  const [activeTechWatch, setActiveTechWatch] = useState(null)
+  const [techWatchForm, setTechWatchForm] = useState({ date: '' })
+  const [techWatches, setTechWatches] = useState([])
 
   // ToConsider view state
   const [query, setQuery] = useState('')
@@ -26,17 +32,25 @@ function App() {
       params.set('size', String(size))
       if (sort) params.set('sort', sort)
       const res = await fetch(`${API}?${params.toString()}`)
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        throw new Error(txt || `Server error (${res.status})`)
+      }
       const data = await res.json()
-      setLinks(data)
+      setLinks(Array.isArray(data) ? data : [])
       const totalCount = res.headers.get('X-Total-Count')
-      setTotal(totalCount ? parseInt(totalCount, 10) : data.length)
+      setTotal(totalCount ? parseInt(totalCount, 10) : (Array.isArray(data) ? data.length : 0))
     } catch (e) {
-      setError('Failed to load links')
+      console.error(e)
+      setLinks([]) // keep skeleton visible
+      setError(e?.message?.includes('Failed to fetch') ? 'Server unreachable' : `Server error: ${e.message}`)
     }
   }
 
   useEffect(() => {
     load()
+    loadActiveTechWatch()
+    loadTechWatches()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, status, page, size, sort])
 
@@ -84,11 +98,122 @@ function App() {
     }
   }
 
+  // TechWatch functions
+  const loadActiveTechWatch = async () => {
+    try {
+      const res = await fetch(`${TECHWATCH_API}/active`)
+      if (res.status === 204) {
+        setActiveTechWatch(null)
+        return
+      }
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        throw new Error(txt || `Server error (${res.status})`)
+      }
+      const data = await res.json()
+      setActiveTechWatch(data)
+    } catch (e) {
+      console.error(e)
+      setActiveTechWatch(null)
+      setError(e?.message?.includes('Failed to fetch') ? 'Server unreachable' : `Server error (TechWatch): ${e.message}`)
+    }
+  }
+
+  const loadTechWatches = async () => {
+    try {
+      const res = await fetch(TECHWATCH_API)
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        throw new Error(txt || `Server error (${res.status})`)
+      }
+      const data = await res.json()
+      setTechWatches(Array.isArray(data) ? data : [])
+    } catch (e) {
+      console.error(e)
+      setTechWatches([])
+      setError(e?.message?.includes('Failed to fetch') ? 'Server unreachable' : `Server error (TechWatch): ${e.message}`)
+    }
+  }
+
+  const createTechWatch = async (e) => {
+    e.preventDefault()
+    if (!techWatchForm.date) {
+      setError('TechWatch date is required')
+      return
+    }
+    try {
+      const res = await fetch(TECHWATCH_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: techWatchForm.date })
+      })
+      if (!res.ok) throw new Error(await res.text())
+      setTechWatchForm({ date: '' })
+      await loadTechWatches()
+    } catch (e) {
+      setError('Failed to create TechWatch: ' + e.message)
+    }
+  }
+
+  const activateTechWatch = async (id) => {
+    await fetch(`${TECHWATCH_API}/${id}/activate`, { method: 'POST' })
+    await loadActiveTechWatch()
+    await loadTechWatches()
+  }
+
+  const completeTechWatch = async (id) => {
+    await fetch(`${TECHWATCH_API}/${id}/complete`, { method: 'POST' })
+    await loadActiveTechWatch()
+    await loadTechWatches()
+  }
+
+  const collectNextLinks = async (id) => {
+    await fetch(`${TECHWATCH_API}/${id}/collect-next-links`, { method: 'POST' })
+    await load()
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / size))
 
   return (
     <div style={{ maxWidth: 900, margin: '2rem auto', padding: '0 1rem' }}>
       <h1>To consider</h1>
+
+      {/* TechWatch Panel */}
+      <section style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
+        <h2 style={{ marginTop: 0 }}>TechWatch</h2>
+        {/* Active TechWatch */}
+        {activeTechWatch ? (
+          <div style={{ marginBottom: '0.75rem' }}>
+            <strong>Active TechWatch:</strong> {activeTechWatch.date}
+            <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+              <button onClick={() => collectNextLinks(activeTechWatch.id)}>Collect Next TechWatch links</button>
+              <button onClick={() => completeTechWatch(activeTechWatch.id)}>Complete</button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginBottom: '0.75rem' }}>No active TechWatch</div>
+        )}
+
+        {/* Create planned TechWatch */}
+        <form onSubmit={createTechWatch} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <input type="date" value={techWatchForm.date} onChange={e => setTechWatchForm({ ...techWatchForm, date: e.target.value })} />
+          <button type="submit">Create planned TechWatch</button>
+        </form>
+
+        {/* Recent TechWatch */}
+        <div>
+          <strong>Recent TechWatch</strong>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {techWatches.slice(0, 5).map(m => (
+              <li key={m.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0.25rem 0' }}>
+                <span>#{m.id} — {m.date} — {m.status}</span>
+                <button onClick={() => activateTechWatch(m.id)} disabled={m.status === 'ACTIVE'}>Activate</button>
+                <button onClick={() => completeTechWatch(m.id)} disabled={m.status === 'COMPLETED'}>Complete</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
 
       {/* Search and filter bar */}
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '1rem' }}>
@@ -104,6 +229,7 @@ function App() {
           <option value="KEEP">Keep</option>
           <option value="LATER">Later</option>
           <option value="REJECT">Rejected</option>
+          <option value="NEXT_TECHWATCH">Next TechWatch</option>
         </select>
         <select value={sort} onChange={e => { setPage(0); setSort(e.target.value) }}>
           <option value="date">Newest first</option>

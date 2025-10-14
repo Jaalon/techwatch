@@ -22,7 +22,7 @@ Chaque tâche apporte une **fonctionnalité immédiatement utilisable** dans le 
   - Liste des liens avec statut “À traiter”
   - Actions : Garder / Plus tard / Rejeter / Supprimer
   - Persistance locale
-- [ ] Vue “À considérer”
+- [x] Vue “À considérer”
   - Liste paginée triée par date
   - Barre de recherche simple
   - Tri ou filtrage minimal (par statut)
@@ -35,7 +35,7 @@ Chaque tâche apporte une **fonctionnalité immédiatement utilisable** dans le 
 🎯 *Objectif : regrouper les liens par catégories et générer un premier export prêt à copier dans Confluence.*
 
 ### Fonctionnalités livrées
-- [ ] Création et gestion d’une MVT
+- [x] Création et gestion d’une MVT
   - Entité `MVT` (id, titre, date, statut)
   - Une seule MVT active à la fois
   - Ajout de liens à la MVT active via le statut “Prochaine MVT”
