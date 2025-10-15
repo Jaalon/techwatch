@@ -65,6 +65,12 @@ databaseChangeLog:
                   type: VARCHAR(20)
                   constraints:
                     nullable: false
+              - column:
+                  name: maxArticles
+                  type: INT
+                  defaultValueNumeric: 10
+                  constraints:
+                    nullable: false
         - addAutoIncrement:
             tableName: techwatch
             columnName: id
@@ -96,3 +102,52 @@ databaseChangeLog:
             sequenceName: TechWatch_SEQ
             startValue: 1
             incrementBy: 50
+  - changeSet:
+      id: 2-link-techwatch-join-table
+      author: junie
+      changes:
+        - createTable:
+            tableName: link_techwatch
+            columns:
+              - column:
+                  name: link_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: techwatch_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: link_techwatch
+            columnNames: link_id, techwatch_id
+            constraintName: pk_link_techwatch
+        - addForeignKeyConstraint:
+            baseTableName: link_techwatch
+            baseColumnNames: link_id
+            constraintName: fk_lt_link
+            referencedTableName: link
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: link_techwatch
+            baseColumnNames: techwatch_id
+            constraintName: fk_lt_techwatch
+            referencedTableName: techwatch
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - createIndex:
+            tableName: link_techwatch
+            indexName: idx_lt_techwatch
+            columns:
+              - column:
+                  name: techwatch_id
+        - createIndex:
+            tableName: link_techwatch
+            indexName: idx_lt_link
+            columns:
+              - column:
+                  name: link_id
+        - sql:
+            sql: "INSERT INTO link_techwatch (link_id, techwatch_id) SELECT id, techwatchId FROM link WHERE techwatchId IS NOT NULL"

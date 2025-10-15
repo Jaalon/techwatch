@@ -11,8 +11,11 @@ function App() {
 
   // TechWatch state
   const [activeTechWatch, setActiveTechWatch] = useState(null)
-  const [techWatchForm, setTechWatchForm] = useState({ date: '' })
+  const [techWatchForm, setTechWatchForm] = useState({ date: '', maxArticles: 10 })
   const [techWatches, setTechWatches] = useState([])
+  const [activeLinks, setActiveLinks] = useState([])
+  const [openedTechWatch, setOpenedTechWatch] = useState(null)
+  const [openedLinks, setOpenedLinks] = useState([])
 
   // ToConsider view state
   const [query, setQuery] = useState('')
@@ -99,11 +102,59 @@ function App() {
   }
 
   // TechWatch functions
+  const loadActiveLinks = async (twId) => {
+    if (!twId) { setActiveLinks([]); return }
+    try {
+      const res = await fetch(`${TECHWATCH_API}/${twId}/links`)
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      setActiveLinks(Array.isArray(data) ? data : [])
+    } catch (e) {
+      console.error(e)
+      setActiveLinks([])
+    }
+  }
+
+  const loadOpenedLinks = async (twId) => {
+    if (!twId) { setOpenedLinks([]); return }
+    try {
+      const res = await fetch(`${TECHWATCH_API}/${twId}/links`)
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      setOpenedLinks(Array.isArray(data) ? data : [])
+    } catch (e) {
+      console.error(e)
+      setOpenedLinks([])
+    }
+  }
+
+  const openTechWatchDetails = async (tw) => {
+    setOpenedTechWatch(tw)
+    await loadOpenedLinks(tw?.id)
+  }
+
+  const removeFromTechWatch = async (twId, linkId) => {
+    try {
+      const res = await fetch(`${TECHWATCH_API}/${twId}/links/${linkId}`, { method: 'DELETE' })
+      if (!res.ok && res.status !== 204) throw new Error(await res.text().catch(() => ''))
+      if (activeTechWatch && activeTechWatch.id === twId) {
+        await loadActiveLinks(twId)
+      }
+      if (openedTechWatch && openedTechWatch.id === twId) {
+        await loadOpenedLinks(twId)
+      }
+    } catch (e) {
+      console.error(e)
+      setError(`Failed to remove from TechWatch: ${e.message}`)
+    }
+  }
+
   const loadActiveTechWatch = async () => {
     try {
       const res = await fetch(`${TECHWATCH_API}/active`)
       if (res.status === 204) {
         setActiveTechWatch(null)
+        setActiveLinks([])
         return
       }
       if (!res.ok) {
@@ -112,9 +163,11 @@ function App() {
       }
       const data = await res.json()
       setActiveTechWatch(data)
+      await loadActiveLinks(data.id)
     } catch (e) {
       console.error(e)
       setActiveTechWatch(null)
+      setActiveLinks([])
       setError(e?.message?.includes('Failed to fetch') ? 'Server unreachable' : `Server error (TechWatch): ${e.message}`)
     }
   }
@@ -145,7 +198,7 @@ function App() {
       const res = await fetch(TECHWATCH_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: techWatchForm.date })
+        body: JSON.stringify({ date: techWatchForm.date, maxArticles: techWatchForm.maxArticles })
       })
       if (!res.ok) throw new Error(await res.text())
       setTechWatchForm({ date: '' })
@@ -170,6 +223,13 @@ function App() {
   const collectNextLinks = async (id) => {
     await fetch(`${TECHWATCH_API}/${id}/collect-next-links`, { method: 'POST' })
     await load()
+    await loadActiveLinks(id)
+  }
+
+  const assignToNext = async (id) => {
+    await fetch(`${API}/${id}/assign-next`, { method: 'POST' })
+    await load()
+    if (activeTechWatch) await loadActiveLinks(activeTechWatch.id)
   }
 
   const totalPages = Math.max(1, Math.ceil(total / size))
@@ -184,11 +244,26 @@ function App() {
         {/* Active TechWatch */}
         {activeTechWatch ? (
           <div style={{ marginBottom: '0.75rem' }}>
-            <strong>Active TechWatch:</strong> {activeTechWatch.date}
+            <strong>Active TechWatch:</strong> {activeTechWatch.date} — max {activeTechWatch.maxArticles} articles — currently {activeLinks.length}
             <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
               <button onClick={() => collectNextLinks(activeTechWatch.id)}>Collect Next TechWatch links</button>
               <button onClick={() => completeTechWatch(activeTechWatch.id)}>Complete</button>
             </div>
+            {activeLinks.length > 0 && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <details>
+                  <summary>Show articles ({activeLinks.length})</summary>
+                  <ul>
+                    {activeLinks.map(al => (
+                      <li key={al.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span>#{al.id} {al.title}</span>
+                        <button onClick={() => removeFromTechWatch(activeTechWatch.id, al.id)} style={{ marginLeft: 'auto' }}>Remove from this TechWatch</button>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ marginBottom: '0.75rem' }}>No active TechWatch</div>
@@ -197,6 +272,9 @@ function App() {
         {/* Create planned TechWatch */}
         <form onSubmit={createTechWatch} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
           <input type="date" value={techWatchForm.date} onChange={e => setTechWatchForm({ ...techWatchForm, date: e.target.value })} />
+          <input type="number" min={1} max={100} value={techWatchForm.maxArticles}
+                 onChange={e => setTechWatchForm({ ...techWatchForm, maxArticles: parseInt(e.target.value || '10', 10) })}
+                 title="Max articles" style={{ width: '8rem' }} />
           <button type="submit">Create planned TechWatch</button>
         </form>
 
@@ -207,6 +285,7 @@ function App() {
             {techWatches.slice(0, 5).map(m => (
               <li key={m.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0.25rem 0' }}>
                 <span>#{m.id} — {m.date} — {m.status}</span>
+                <button onClick={() => openTechWatchDetails(m)}>Open</button>
                 <button onClick={() => activateTechWatch(m.id)} disabled={m.status === 'ACTIVE'}>Activate</button>
                 <button onClick={() => completeTechWatch(m.id)} disabled={m.status === 'COMPLETED'}>Complete</button>
               </li>
@@ -214,6 +293,28 @@ function App() {
           </ul>
         </div>
       </section>
+
+      {/* Opened TechWatch Details */}
+      {openedTechWatch && (
+        <section style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ margin: 0 }}>Opened TechWatch: #{openedTechWatch.id} — {openedTechWatch.date} — {openedTechWatch.status}</h3>
+            <button onClick={() => { setOpenedTechWatch(null); setOpenedLinks([]) }} style={{ marginLeft: 'auto' }}>Close</button>
+          </div>
+          {openedLinks.length > 0 ? (
+            <ul>
+              {openedLinks.map(al => (
+                <li key={al.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span>#{al.id} {al.title}</span>
+                  <button onClick={() => removeFromTechWatch(openedTechWatch.id, al.id)} style={{ marginLeft: 'auto' }}>Remove from this TechWatch</button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div>No articles in this TechWatch.</div>
+          )}
+        </section>
+      )}
 
       {/* Search and filter bar */}
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '1rem' }}>
@@ -273,6 +374,7 @@ function App() {
                 <button onClick={() => updateStatus(l.id, 'KEEP')}>Keep</button>
                 <button onClick={() => updateStatus(l.id, 'LATER')}>Later</button>
                 <button onClick={() => updateStatus(l.id, 'REJECT')}>Reject</button>
+                <button onClick={() => assignToNext(l.id)}>Add to next TechWatch</button>
                 <button onClick={() => remove(l.id)} style={{ marginLeft: 'auto' }}>Delete</button>
               </div>
             </li>

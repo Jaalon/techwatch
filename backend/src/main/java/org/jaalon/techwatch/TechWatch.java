@@ -18,4 +18,8 @@ public class TechWatch extends PanacheEntity {
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     public TechWatchStatus status = TechWatchStatus.PLANNED;
+
+    @NotNull
+    @Column(name = "maxArticles")
+    public Integer maxArticles = 10; // Capacity per TechWatch, default 10
 }

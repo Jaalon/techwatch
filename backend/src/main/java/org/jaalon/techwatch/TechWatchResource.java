@@ -25,6 +25,9 @@ public class TechWatchResource {
     @Inject
     LinkRepository linkRepository;
 
+    @Inject
+    TechWatchService techWatchService;
+
     @GET
     public List<TechWatch> list() {
         return techWatchRepository.listAll(Sort.by("date").descending());
@@ -41,6 +44,7 @@ public class TechWatchResource {
     public static class CreateDTO {
         public java.time.LocalDate date;
         public TechWatchStatus status; // optional, default PLANNED
+        public Integer maxArticles; // optional, default 10
     }
 
     @POST
@@ -52,6 +56,7 @@ public class TechWatchResource {
         TechWatch m = new TechWatch();
         m.date = dto.date;
         m.status = dto.status != null ? dto.status : TechWatchStatus.PLANNED;
+        m.maxArticles = (dto.maxArticles != null && dto.maxArticles > 0) ? dto.maxArticles : 10;
         if (m.status == TechWatchStatus.ACTIVE) {
             // enforce single active
             long active = techWatchRepository.count("status = ?1", TechWatchStatus.ACTIVE);
@@ -102,11 +107,25 @@ public class TechWatchResource {
         TechWatch m = techWatchRepository.findById(id);
         if (m == null) throw new NotFoundException();
         if (m.status != TechWatchStatus.ACTIVE) throw new BadRequestException("TechWatch must be ACTIVE to collect links");
-        List<Link> next = linkRepository.list("status = ?1", LinkStatus.NEXT_TECHWATCH);
-        for (Link l : next) {
-            l.techwatchId = m.id; // Attach to the TechWatch
-            l.status = LinkStatus.KEEP; // attach and mark as keep for the TechWatch
-        }
-        return Response.ok().entity(next.size()).build();
+        int assigned = techWatchService.distributeNextLinks();
+        return Response.ok().entity(assigned).build();
+    }
+
+    @GET
+    @Path("/{id}/links")
+    public List<Link> listLinks(@PathParam("id") Long id) {
+        TechWatch m = techWatchRepository.findById(id);
+        if (m == null) throw new NotFoundException();
+        return techWatchService.listLinks(id);
+    }
+
+    @DELETE
+    @Path("/{id}/links/{linkId}")
+    @Transactional
+    public Response removeLink(@PathParam("id") Long id, @PathParam("linkId") Long linkId) {
+        TechWatch m = techWatchRepository.findById(id);
+        if (m == null) throw new NotFoundException();
+        techWatchService.removeLinkFromTechWatch(id, linkId);
+        return Response.noContent().build();
     }
 }

@@ -124,12 +124,13 @@ Accept: application/json
 GET http://localhost:8080/api/techwatch/active
 Accept: application/json
 
-### Create planned TechWatch (date required)
+### Create planned TechWatch (date required, optional maxArticles)
 POST http://localhost:8080/api/techwatch
 Content-Type: application/json
 
 {
-  "date": "2025-10-14"
+  "date": "2025-10-14",
+  "maxArticles": 10
 }
 
 ### Activate a TechWatch
@@ -138,8 +139,12 @@ POST http://localhost:8080/api/techwatch/1/activate
 ### Complete a TechWatch
 POST http://localhost:8080/api/techwatch/1/complete
 
-### Collect NEXT_TECHWATCH links into active TechWatch
+### Collect NEXT_TECHWATCH links into active TechWatch (respects capacity; spills to next by date; auto-creates +7d if needed)
 POST http://localhost:8080/api/techwatch/1/collect-next-links
+
+### Get links attached to a TechWatch
+GET http://localhost:8080/api/techwatch/1/links
+Accept: application/json
 
 ### Set a link as NEXT_TECHWATCH
 PUT http://localhost:8080/api/links/1
@@ -148,6 +153,9 @@ Content-Type: application/json
 {
   "status": "NEXT_TECHWATCH"
 }
+
+### Assign a link to the next TechWatch (capacity-aware)
+POST http://localhost:8080/api/links/1/assign-next
 
 ### 🏥 QUARKUS ENDPOINTS
 ###

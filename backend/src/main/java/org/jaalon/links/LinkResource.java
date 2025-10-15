@@ -25,6 +25,9 @@ public class LinkResource {
     @Inject
     LinkRepository repository;
 
+    @Inject
+    org.jaalon.techwatch.TechWatchService techWatchService;
+
     @GET
     public Response list(@QueryParam("status") String status,
                          @QueryParam("q") String q,
@@ -124,5 +127,14 @@ public class LinkResource {
         boolean deleted = repository.deleteById(id);
         if (!deleted) throw new NotFoundException();
         return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/{id}/assign-next")
+    @Consumes(MediaType.WILDCARD)
+    @Transactional
+    public Response assignToNext(@PathParam("id") Long id) {
+        org.jaalon.techwatch.TechWatch tw = techWatchService.assignLinkToNext(id);
+        return Response.ok(tw).build();
     }
 }

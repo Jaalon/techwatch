@@ -2,14 +2,13 @@ package org.jaalon.links;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 public class Link extends PanacheEntity {
@@ -30,7 +29,17 @@ public class Link extends PanacheEntity {
     @Enumerated(EnumType.STRING)
     public LinkStatus status = LinkStatus.TO_PROCESS;
 
-    // Optional association to a TechWatch once attached
+    // Many-to-many association: a link can belong to multiple TechWatch minutes
+    @ManyToMany
+    @JoinTable(name = "link_techwatch",
+            joinColumns = @JoinColumn(name = "link_id"),
+            inverseJoinColumns = @JoinColumn(name = "techwatch_id"))
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public Set<org.jaalon.techwatch.TechWatch> techWatches = new HashSet<>();
+
+    // Legacy single association column kept for backward compatibility and data migration
+    // Do not use in new code paths.
+    @Deprecated
     public Long techwatchId;
 
     @NotNull
