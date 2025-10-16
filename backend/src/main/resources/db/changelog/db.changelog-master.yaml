@@ -225,3 +225,57 @@ databaseChangeLog:
             columns:
               - column:
                   name: link_id
+
+
+  - changeSet:
+      id: 4-llm-config
+      author: junie
+      changes:
+        - createTable:
+            tableName: LlmConfig
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: baseUrl
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: apiKey
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: model
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_default
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: createdAt
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addAutoIncrement:
+            tableName: LlmConfig
+            columnName: id
+            columnDataType: BIGINT
+        - createSequence:
+            sequenceName: LlmConfig_SEQ
+            startValue: 1
+            incrementBy: 50
