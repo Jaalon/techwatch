@@ -20,6 +20,7 @@ function App() {
   const [activeLinks, setActiveLinks] = useState([])
   const [openedTechWatch, setOpenedTechWatch] = useState(null)
   const [openedLinks, setOpenedLinks] = useState([])
+  const [showMarkdown, setShowMarkdown] = useState(false)
 
   // ToConsider view state
   const [query, setQuery] = useState('')
@@ -134,6 +135,7 @@ function App() {
 
   const openTechWatchDetails = async (tw) => {
     setOpenedTechWatch(tw)
+    setShowMarkdown(false)
     await loadOpenedLinks(tw?.id)
   }
 
@@ -284,6 +286,38 @@ function App() {
 
   const totalPages = Math.max(1, Math.ceil(total / size))
 
+  const buildMarkdown = (date, list, chosenMap) => {
+    const lines = []
+    const d = date || ''
+    if (d) lines.push(String(d))
+    // Group by category using chosenMap override if valid; otherwise first tag (alphabetical). If none, use 'AUTRES'.
+    const groups = {}
+    for (const l of Array.isArray(list) ? list : []) {
+      const tagNames = (l.tags || []).map(t => t.name).sort((a,b)=>a.localeCompare(b))
+      const override = chosenMap && chosenMap[l.id]
+      const cat = (override && tagNames.includes(override)) ? override : (tagNames[0] || 'AUTRES')
+      if (!groups[cat]) groups[cat] = []
+      groups[cat].push(l)
+    }
+    // Order categories alphabetically, but keep 'AUTRES' at the end
+    const cats = Object.keys(groups).sort((a,b) => {
+      if (a === 'AUTRES') return 1
+      if (b === 'AUTRES') return -1
+      return a.localeCompare(b)
+    })
+    for (const cat of cats) {
+      lines.push(``)
+      lines.push(`${cat}`)
+      for (const l of groups[cat]) {
+        const title = l.title || ''
+        const url = l.url || ''
+        const desc = (l.description || '').trim()
+        lines.push(desc ? `* [${title}](${url}): ${desc}` : `* [${title}](${url})`)
+      }
+    }
+    return lines.join('\n')
+  }
+
   return (
     <div className="max-w-[900px] mx-auto my-8 px-4 text-left">
       <h1>To consider</h1>
@@ -358,7 +392,7 @@ function App() {
         <section className="border border-gray-300 p-4 mb-4 rounded">
           <div className="flex items-center gap-2">
             <h3 className="m-0">Opened TechWatch: #{openedTechWatch.id} — {openedTechWatch.date} — {openedTechWatch.status}</h3>
-            <button onClick={() => { setOpenedTechWatch(null); setOpenedLinks([]) }} className="ml-auto">Close</button>
+            <button onClick={() => { setOpenedTechWatch(null); setOpenedLinks([]); setShowMarkdown(false) }} className="ml-auto">Close</button>
           </div>
           {openedLinks.length > 0 ? (
             <div>
@@ -377,6 +411,40 @@ function App() {
                 techWatchId={openedTechWatch.id}
                 onRemoveFromTechWatch={removeFromTechWatch}
               />
+
+              {/* Export Markdown (on demand) */}
+              <div className="mt-4">
+                <button onClick={() => setShowMarkdown(v => !v)}>
+                  {showMarkdown ? 'Masquer l\'export Markdown' : 'Afficher l\'export Markdown'}
+                </button>
+                {showMarkdown && (() => {
+                  let chosen = {}
+                  try { chosen = JSON.parse(localStorage.getItem(`mvtCategory:${openedTechWatch.id}`) || '{}') } catch {}
+                  const md = buildMarkdown(openedTechWatch.date, openedLinks, chosen)
+                  const copyText = async () => {
+                    try { await navigator.clipboard.writeText(md) } catch (e) { console.error(e) }
+                  }
+                  const download = () => {
+                    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' })
+                    const a = document.createElement('a')
+                    a.href = URL.createObjectURL(blob)
+                    a.download = `${openedTechWatch.date}-mvt.md`
+                    document.body.appendChild(a)
+                    a.click()
+                    a.remove()
+                  }
+                  return (
+                    <div className="mt-2">
+                      <h4 className="my-2">Export Markdown</h4>
+                      <textarea readOnly value={md} rows={10} className="w-full font-mono text-sm"></textarea>
+                      <div className="mt-2 flex gap-2">
+                        <button onClick={copyText}>Copier texte</button>
+                        <button onClick={download}>Télécharger .md</button>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
             </div>
           ) : (
             <div>No articles in this TechWatch.</div>
@@ -464,6 +532,31 @@ function GroupedByCategoryView({
   const [draggingLinkId, setDraggingLinkId] = useState(null)
   const [showBottomChooserFor, setShowBottomChooserFor] = useState(null)
 
+  const storageKey = techWatchId ? `mvtCategory:${techWatchId}` : null
+  // Load saved categories for this TechWatch
+  useEffect(() => {
+    if (!storageKey) return
+    try {
+      const raw = localStorage.getItem(storageKey)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed && typeof parsed === 'object') setChosenCategory(parsed)
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [storageKey])
+  // Helper to update and persist
+  const updateChosenCategory = (updater) => {
+    setChosenCategory(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater
+      if (storageKey) {
+        try { localStorage.setItem(storageKey, JSON.stringify(next)) } catch (e) { /* ignore */ }
+      }
+      return next
+    })
+  }
+
   const allTagNames = Array.from(new Set((links || []).flatMap(l => (l.tags || []).map(t => t.name)))).sort((a, b) => a.localeCompare(b))
   const UNCATEGORIZED = 'Uncategorized'
 
@@ -505,7 +598,7 @@ function GroupedByCategoryView({
         const data = JSON.parse(txt)
         const allowed = Array.isArray(data.tags) && data.tags.includes(categoryName)
         if (allowed) {
-          setChosenCategory(prev => ({ ...prev, [data.id]: categoryName }))
+          updateChosenCategory(prev => ({ ...prev, [data.id]: categoryName }))
         }
       } catch (err) { /* ignore */ }
       setShowBottomChooserFor(null)
@@ -578,8 +671,8 @@ function GroupedByCategoryView({
                 {tagNames.map(name => (
                   <div key={name}
                        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
-                       onDrop={() => { setChosenCategory(prev => ({ ...prev, [l.id]: name })); setShowBottomChooserFor(null) }}
-                       onClick={() => { setChosenCategory(prev => ({ ...prev, [l.id]: name })); setShowBottomChooserFor(null) }}
+                       onDrop={() => { updateChosenCategory(prev => ({ ...prev, [l.id]: name })); setShowBottomChooserFor(null) }}
+                       onClick={() => { updateChosenCategory(prev => ({ ...prev, [l.id]: name })); setShowBottomChooserFor(null) }}
                        className="px-2 py-1 border border-indigo-300 bg-indigo-50 rounded-full cursor-pointer">
                     {name}
                   </div>

@@ -42,14 +42,17 @@ Chaque tâche apporte une **fonctionnalité immédiatement utilisable** dans le 
 - [x] Organisation en catégories
   - Création libre de catégories
   - Association manuelle de liens à des catégories
-- [ ] Export texte au format markdown
+- [x] Export texte au format markdown
   - Génération du texte au format :
     ```
     2025-10-13
-    CATEGORIE 1
-    - TITRE (URL) : DESCRIPTION
+    === CATEGORIE 1
+    * [TITRE1](URL): DESCRIPTION
+    * [TITRE2](URL): DESCRIPTION
+    === CATEGORIE 2
+    * [TITRE3](URL): DESCRIPTION
     ```
-  - Bouton “Copier texte” ou “Télécharger .txt”
+  - Bouton “Copier texte” ou “Télécharger .md”
 
 💡 *Résultat : tu peux préparer et exporter ta première MVT complète sans quitter l’app.*
 
