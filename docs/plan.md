@@ -46,9 +46,11 @@ Chaque tâche apporte une **fonctionnalité immédiatement utilisable** dans le 
   - Génération du texte au format :
     ```
     2025-10-13
-    === CATEGORIE 1
+    
+    CATEGORIE 1
     * [TITRE1](URL): DESCRIPTION
     * [TITRE2](URL): DESCRIPTION
+    
     === CATEGORIE 2
     * [TITRE3](URL): DESCRIPTION
     ```
