@@ -23,20 +23,22 @@ function MainPage({
   const [activeTab, setActiveTab] = useState('links')
 
   return (
-    <div className="max-w-[900px] mx-auto my-8 px-4 text-left">
-      <h1 className="mb-4">TechWatch</h1>
-      <div role="tablist" aria-label="TechWatch sections" className="flex gap-4 border-b border-gray-300 mb-4">
-        <TabButton id="links" label="Links" activeTab={activeTab} onSelect={setActiveTab} />
-        <TabButton id="next" label="Next" activeTab={activeTab} onSelect={setActiveTab} />
-        <TabButton id="techwatchs" label="TechWatchs" activeTab={activeTab} onSelect={setActiveTab} />
-        <TabButton id="settings" label="Settings" activeTab={activeTab} onSelect={setActiveTab} />
-      </div>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 900, padding: '32px 16px', textAlign: 'left' }}>
+        <h1 style={{ marginBottom: 16 }}>TechWatch</h1>
+        <div role="tablist" aria-label="TechWatch sections" style={{ display: 'flex', gap: 16, borderBottom: '1px solid #d1d5db', marginBottom: 16 }}>
+          <TabButton id="links" label="Links" activeTab={activeTab} onSelect={setActiveTab} />
+          <TabButton id="next" label="Next" activeTab={activeTab} onSelect={setActiveTab} />
+          <TabButton id="techwatchs" label="TechWatchs" activeTab={activeTab} onSelect={setActiveTab} />
+          <TabButton id="settings" label="Settings" activeTab={activeTab} onSelect={setActiveTab} />
+        </div>
 
-      <div className="min-h-[200px]">
-        {activeTab === 'links' && (LinksContent || <div>Links</div>)}
-        {activeTab === 'next' && (NextContent || <div>Next</div>)}
-        {activeTab === 'techwatchs' && (TechWatchsContent || <div>TechWatchs</div>)}
-        {activeTab === 'settings' && (SettingsContent || <div>Settings</div>)}
+        <div style={{ minHeight: 200 }}>
+          {activeTab === 'links' && (LinksContent || <div>Links</div>)}
+          {activeTab === 'next' && (NextContent || <div>Next</div>)}
+          {activeTab === 'techwatchs' && (TechWatchsContent || <div>TechWatchs</div>)}
+          {activeTab === 'settings' && (SettingsContent || <div>Settings</div>)}
+        </div>
       </div>
     </div>
   )

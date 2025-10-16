@@ -3,8 +3,8 @@ import './App.css'
 import LinkList from './components/LinkList'
 import TechWatchList from './components/TechWatchList'
 
-const API = '/api/links'
-const TECHWATCH_API = '/api/techwatch'
+import { listLinks, createLink as apiCreateLink, deleteLink as apiDeleteLink, updateLinkStatus as apiUpdateLinkStatus, assignToNext as apiAssignToNext, addTag as apiAddTag, removeTag as apiRemoveTag, searchTags as apiSearchTags } from './api/links'
+import { getActiveTechWatch as apiGetActiveTechWatch, listTechWatches as apiListTechWatches, createTechWatch as apiCreateTechWatch, activateTechWatch as apiActivateTechWatch, completeTechWatch as apiCompleteTechWatch, collectNextLinks as apiCollectNextLinks, getTechWatchLinks as apiGetTechWatchLinks, removeLinkFromTechWatch as apiRemoveLinkFromTechWatch } from './api/techwatch'
 
 import MainPage from './components/MainPage'
 import LinksTab from './components/tabs/LinksTab'
@@ -39,24 +39,12 @@ function App() {
   const load = async () => {
     setError('')
     try {
-      const params = new URLSearchParams()
-      if (status) params.set('status', status)
-      if (query) params.set('q', query)
-      params.set('page', String(page))
-      params.set('size', String(size))
-      if (sort) params.set('sort', sort)
-      const res = await fetch(`${API}?${params.toString()}`)
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '')
-        throw new Error(txt || `Server error (${res.status})`)
-      }
-      const data = await res.json()
-      setLinks(Array.isArray(data) ? data : [])
-      const totalCount = res.headers.get('X-Total-Count')
-      setTotal(totalCount ? parseInt(totalCount, 10) : (Array.isArray(data) ? data.length : 0))
+      const { items, total: totalFromHeader } = await listLinks({ status, q: query, page, size, sort })
+      setLinks(items)
+      setTotal(typeof totalFromHeader === 'number' ? totalFromHeader : items.length)
     } catch (e) {
       console.error(e)
-      setLinks([]) // keep skeleton visible
+      setLinks([])
       setError(e?.message?.includes('Failed to fetch') ? 'Server unreachable' : `Server error: ${e.message}`)
     }
   }
@@ -76,15 +64,7 @@ function App() {
       return
     }
     try {
-      const res = await fetch(API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      })
-      if (!res.ok) {
-        const txt = await res.text()
-        throw new Error(txt || 'API error')
-      }
+      await apiCreateLink(form)
       setForm({ title: '', url: '', description: '' })
       // After adding, reload first page to see newest first
       setPage(0)
@@ -95,17 +75,13 @@ function App() {
   }
 
   const remove = async (id) => {
-    await fetch(`${API}/${id}`, { method: 'DELETE' })
+    await apiDeleteLink(id)
     await load()
   }
 
   const updateStatus = async (id, newStatus) => {
     try {
-      await fetch(`${API}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      })
+      await apiUpdateLinkStatus(id, newStatus)
       await load()
     } catch (e) {
       console.error(e)
@@ -116,10 +92,8 @@ function App() {
   const loadActiveLinks = async (twId) => {
     if (!twId) { setActiveLinks([]); return }
     try {
-      const res = await fetch(`${TECHWATCH_API}/${twId}/links`)
-      if (!res.ok) throw new Error(await res.text())
-      const data = await res.json()
-      setActiveLinks(Array.isArray(data) ? data : [])
+      const data = await apiGetTechWatchLinks(twId)
+      setActiveLinks(data)
     } catch (e) {
       console.error(e)
       setActiveLinks([])
@@ -129,10 +103,8 @@ function App() {
   const loadOpenedLinks = async (twId) => {
     if (!twId) { setOpenedLinks([]); return }
     try {
-      const res = await fetch(`${TECHWATCH_API}/${twId}/links`)
-      if (!res.ok) throw new Error(await res.text())
-      const data = await res.json()
-      setOpenedLinks(Array.isArray(data) ? data : [])
+      const data = await apiGetTechWatchLinks(twId)
+      setOpenedLinks(data)
     } catch (e) {
       console.error(e)
       setOpenedLinks([])
@@ -147,8 +119,7 @@ function App() {
 
   const removeFromTechWatch = async (twId, linkId) => {
     try {
-      const res = await fetch(`${TECHWATCH_API}/${twId}/links/${linkId}`, { method: 'DELETE' })
-      if (!res.ok && res.status !== 204) throw new Error(await res.text().catch(() => ''))
+      await apiRemoveLinkFromTechWatch(twId, linkId)
       if (activeTechWatch && activeTechWatch.id === twId) {
         await loadActiveLinks(twId)
       }
@@ -163,17 +134,12 @@ function App() {
 
   const loadActiveTechWatch = async () => {
     try {
-      const res = await fetch(`${TECHWATCH_API}/active`)
-      if (res.status === 204) {
+      const data = await apiGetActiveTechWatch()
+      if (!data) {
         setActiveTechWatch(null)
         setActiveLinks([])
         return
       }
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '')
-        throw new Error(txt || `Server error (${res.status})`)
-      }
-      const data = await res.json()
       setActiveTechWatch(data)
       await loadActiveLinks(data.id)
     } catch (e) {
@@ -186,12 +152,7 @@ function App() {
 
   const loadTechWatches = async () => {
     try {
-      const res = await fetch(TECHWATCH_API)
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '')
-        throw new Error(txt || `Server error (${res.status})`)
-      }
-      const data = await res.json()
+      const data = await apiListTechWatches()
       setTechWatches(Array.isArray(data) ? data : [])
     } catch (e) {
       console.error(e)
@@ -207,12 +168,7 @@ function App() {
       return
     }
     try {
-      const res = await fetch(TECHWATCH_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: techWatchForm.date, maxArticles: techWatchForm.maxArticles })
-      })
-      if (!res.ok) throw new Error(await res.text())
+      await apiCreateTechWatch({ date: techWatchForm.date, maxArticles: techWatchForm.maxArticles })
       setTechWatchForm({ date: '' })
       await loadTechWatches()
     } catch (e) {
@@ -221,25 +177,25 @@ function App() {
   }
 
   const activateTechWatch = async (id) => {
-    await fetch(`${TECHWATCH_API}/${id}/activate`, { method: 'POST' })
+    await apiActivateTechWatch(id)
     await loadActiveTechWatch()
     await loadTechWatches()
   }
 
   const completeTechWatch = async (id) => {
-    await fetch(`${TECHWATCH_API}/${id}/complete`, { method: 'POST' })
+    await apiCompleteTechWatch(id)
     await loadActiveTechWatch()
     await loadTechWatches()
   }
 
   const collectNextLinks = async (id) => {
-    await fetch(`${TECHWATCH_API}/${id}/collect-next-links`, { method: 'POST' })
+    await apiCollectNextLinks(id)
     await load()
     await loadActiveLinks(id)
   }
 
   const assignToNext = async (id) => {
-    await fetch(`${API}/${id}/assign-next`, { method: 'POST' })
+    await apiAssignToNext(id)
     await load()
     if (activeTechWatch) await loadActiveLinks(activeTechWatch.id)
   }
@@ -248,9 +204,7 @@ function App() {
   const fetchTagOptions = async (id, text) => {
     try {
       if (!text) { setTagOptions(prev => ({ ...prev, [id]: [] })); return }
-      const res = await fetch(`/api/tags?q=${encodeURIComponent(text)}&limit=10`)
-      if (!res.ok) throw new Error(await res.text())
-      const data = await res.json()
+      const data = await apiSearchTags(text, 10)
       setTagOptions(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }))
     } catch (e) {
       console.error(e)
@@ -260,12 +214,7 @@ function App() {
   const addTagToLink = async (id, name) => {
     if (!name) return
     try {
-      const res = await fetch(`${API}/${id}/tags`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-      })
-      if (!res.ok) throw new Error(await res.text())
+      await apiAddTag(id, name)
       setTagInputs(prev => ({ ...prev, [id]: '' }))
       setTagOptions(prev => ({ ...prev, [id]: [] }))
       await load()
@@ -279,8 +228,7 @@ function App() {
 
   const removeTagFromLink = async (id, name) => {
     try {
-      const res = await fetch(`${API}/${id}/tags/${encodeURIComponent(name)}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error(await res.text())
+      await apiRemoveTag(id, name)
       await load()
       if (activeTechWatch) await loadActiveLinks(activeTechWatch.id)
       if (openedTechWatch) await loadOpenedLinks(openedTechWatch.id)
@@ -477,6 +425,40 @@ function App() {
                 techWatchId={activeTechWatch.id}
                 onRemoveFromTechWatch={removeFromTechWatch}
               />
+
+              {/* Markdown export for active TechWatch, same as opened mvt in Techwatch tab */}
+              <div className="mt-4">
+                <button onClick={() => setShowMarkdown(v => !v)}>
+                  {showMarkdown ? 'Hide Markdown export' : 'Show Markdown export'}
+                </button>
+                {showMarkdown && (() => {
+                  let chosen = {}
+                  try { chosen = JSON.parse(localStorage.getItem(`mvtCategory:${activeTechWatch.id}`) || '{}') } catch {}
+                  const md = buildMarkdown(activeTechWatch.date, activeLinks, chosen)
+                  const copyText = async () => {
+                    try { await navigator.clipboard.writeText(md) } catch (e) { console.error(e) }
+                  }
+                  const download = () => {
+                    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' })
+                    const a = document.createElement('a')
+                    a.href = URL.createObjectURL(blob)
+                    a.download = `${activeTechWatch.date}-mvt.md`
+                    document.body.appendChild(a)
+                    a.click()
+                    a.remove()
+                  }
+                  return (
+                    <div className="mt-2">
+                      <h4 className="my-2">Export Markdown</h4>
+                      <textarea readOnly value={md} rows={10} className="w-full font-mono text-sm"></textarea>
+                      <div className="mt-2 flex gap-2">
+                        <button onClick={copyText}>Copy text</button>
+                        <button onClick={download}>Download .md</button>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
             </div>
           )}
         </div>

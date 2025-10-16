@@ -1,37 +1,25 @@
 import React from 'react'
-import LinkEditModal from './LinkEditModal'
+import { createPortal } from 'react-dom'
+import { updateLinkDescription } from '../api/links'
+import { summarizeLink } from '../api/ai'
 
-function LinkItem({
-  link,
-  tagInputs,
-  setTagInputs,
-  tagOptions,
-  fetchTagOptions,
-  onRemoveTag,
-  onAddTag,
-  onUpdateStatus,
-  onAssignNext,
-  onDelete
-}) {
+export default function LinkEditModal({ link, onRequestClose }) {
   const l = link
-  const when = l.discoveredAt || l.date
-  const whenTxt = when ? new Date(when).toLocaleString() : ''
-  const [showMagic, setShowMagic] = React.useState(false)
+
   const [modalPos, setModalPos] = React.useState({ x: 100, y: 100 })
+  const [modalSize, setModalSize] = React.useState({ w: 600, h: 380 })
   const [dragging, setDragging] = React.useState(false)
+  const [resizing, setResizing] = React.useState(false)
+  const [resizeDir, setResizeDir] = React.useState('se')
+
   const dragOffsetRef = React.useRef({ x: 0, y: 0 })
-  const headerRef = React.useRef(null)
+  const resizeStartRef = React.useRef({ x: 0, y: 0, w: 0, h: 0, startX: 0, startY: 0, dir: 'se' })
+
   const [desc, setDesc] = React.useState(l.description || '')
   const [apiText, setApiText] = React.useState('')
 
-  // Resize state
-  const [modalSize, setModalSize] = React.useState({ w: 600, h: 380 })
-  const [resizing, setResizing] = React.useState(false)
-  const [resizeDir, setResizeDir] = React.useState('se') // n, s, e, w, ne, nw, se, sw
-  const resizeStartRef = React.useRef({ x: 0, y: 0, w: 0, h: 0, startX: 0, startY: 0, dir: 'se' })
-
-  const openModal = React.useCallback(() => {
-    // Position the modal horizontally centered and align the top with the bottom of the tabs/menu if possible
+  // Position the modal on mount: center horizontally; top aligned under tabs if found
+  React.useEffect(() => {
     const w = typeof window !== 'undefined' ? window.innerWidth : 800
     const h = typeof window !== 'undefined' ? window.innerHeight : 600
     const modalW = modalSize.w || 600
@@ -43,31 +31,25 @@ function LinkItem({
       const el = document.querySelector('[data-tabs-bottom], [role="tablist"], #tabs, .tabs')
       if (el && el.getBoundingClientRect) {
         const r = el.getBoundingClientRect()
-        // Use viewport space since the modal is fixed-positioned
         y = Math.max(12, Math.min(h - modalH - 12, Math.floor(r.bottom + 8)))
       }
     }
-
     setModalPos({ x, y })
-    setShowMagic(true)
   }, [modalSize.w, modalSize.h])
 
   const closeModal = React.useCallback(async () => {
     try {
       if ((desc || '') !== (l.description || '')) {
-        await fetch(`/api/links/${l.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ description: desc })
-        }).catch(() => {})
+        await updateLinkDescription(l.id, desc)
       }
     } catch (e) {
       console.error(e)
     } finally {
-      setShowMagic(false)
+      onRequestClose?.()
     }
-  }, [desc, l])
+  }, [desc, l, onRequestClose])
 
+  // Drag logic
   const onHeaderMouseDown = (e) => {
     e.preventDefault()
     setDragging(true)
@@ -80,7 +62,6 @@ function LinkItem({
       e.preventDefault()
       const w = typeof window !== 'undefined' ? window.innerWidth : 800
       const h = typeof window !== 'undefined' ? window.innerHeight : 600
-      // Constrain within viewport lightly
       const x = Math.min(w - 40, Math.max(0, e.clientX - dragOffsetRef.current.x))
       const y = Math.min(h - 40, Math.max(0, e.clientY - dragOffsetRef.current.y))
       setModalPos({ x, y })
@@ -94,6 +75,7 @@ function LinkItem({
     }
   }, [dragging, modalPos.x, modalPos.y])
 
+  // Resize logic
   const onResizeMouseDown = (dir) => (e) => {
     e.preventDefault()
     setResizing(true)
@@ -120,7 +102,6 @@ function LinkItem({
       const padding = 12
 
       const dir = resizeDir
-      // East/West affect width/X
       if (dir.includes('e') && !dir.includes('w')) {
         newW = resizeStartRef.current.w + dx
       }
@@ -128,7 +109,6 @@ function LinkItem({
         newW = resizeStartRef.current.w - dx
         newX = resizeStartRef.current.startX + dx
       }
-      // North/South affect height/Y
       if (dir.includes('s') && !dir.includes('n')) {
         newH = resizeStartRef.current.h + dy
       }
@@ -137,11 +117,9 @@ function LinkItem({
         newY = resizeStartRef.current.startY + dy
       }
 
-      // Constrain size
       newW = Math.max(minW, newW)
       newH = Math.max(minH, newH)
 
-      // Constrain within viewport (right and bottom edges)
       if (newX + newW > wViewport - padding) {
         if (dir.includes('e') && !dir.includes('w')) {
           newW = Math.max(minW, wViewport - padding - newX)
@@ -159,7 +137,6 @@ function LinkItem({
         }
       }
 
-      // Constrain to top/left bounds
       if (newX < padding) {
         const delta = padding - newX
         newX += delta
@@ -184,77 +161,78 @@ function LinkItem({
   }, [resizing, resizeDir])
 
   React.useEffect(() => {
-    if (!showMagic) return
     const onKey = (e) => { if (e.key === 'Escape') closeModal() }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [showMagic, closeModal])
+  }, [closeModal])
 
-  return (
-    <li className="border border-gray-300 p-3 mb-2 rounded text-left">
-      <div className="flex justify-between items-baseline">
-        <div className="flex items-center gap-2">
-          <strong>{l.title}</strong>
-          <button
-            title="Edit"
-            aria-label="Edit"
-            onClick={openModal}
-            className="inline-flex items-center justify-center h-6 px-2 text-xs font-medium rounded border border-gray-300 hover:bg-gray-100"
-          >
-            Edit
-          </button>
-        </div>
-        <div className="flex gap-2 items-center">
-          <small title="Discovered at">{whenTxt}</small>
-          <small>{l.status}</small>
-        </div>
-      </div>
-      <div>
-        <a href={l.url} target="_blank" rel="noreferrer">{l.url}</a>
-      </div>
-      {l.description && <p>{l.description}</p>}
+  const onSummarize = async () => {
+    try {
+      const r = await summarizeLink(l.id)
+      if (r && (r.summary || r.text)) {
+        setApiText(r.summary || r.text)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
-      {/* Tags section */}
-      <div className="my-1">
-        <div className="flex gap-2 flex-wrap items-center">
-          {(l.tags || []).map(t => (
-            <span key={t.id || t.name} className="bg-indigo-50 border border-indigo-300 rounded-full px-2 py-0.5 inline-flex items-center gap-1">
-              <span>{t.name}</span>
-              <button title="Remove tag" onClick={() => onRemoveTag(l.id, t.name)} className="ml-1 text-indigo-600 hover:text-indigo-800">&times;</button>
-            </span>
-          ))}
-          <div className="inline-flex gap-1 items-center">
-            <input
-              list={`tag-options-${l.id}`}
-              placeholder="Add tag..."
-              value={tagInputs[l.id] || ''}
-              onChange={async e => { const v = e.target.value; setTagInputs(prev => ({ ...prev, [l.id]: v })); await fetchTagOptions(l.id, v) }}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onAddTag(l.id, (tagInputs[l.id] || '').trim()) } }}
-              className="min-w-[10rem]"
+  return createPortal(
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
+      {/* Opaque backdrop */}
+      <div className="absolute inset-0 bg-black" onClick={closeModal} />
+
+      {/* Draggable & Resizable window */}
+      <div
+        className="fixed bg-white rounded shadow-lg border border-gray-200 relative flex flex-col"
+        style={{ top: modalPos.y, left: modalPos.x, width: modalSize.w, height: modalSize.h }}
+      >
+        {/* Header bar (drag handle) */}
+        <div
+          onMouseDown={onHeaderMouseDown}
+          className="cursor-move select-none bg-gray-100 px-3 py-2 flex items-center justify-between gap-2"
+        >
+          <h3 className="text-base font-semibold truncate" title={l.title}>{l.title}</h3>
+          <button aria-label="Close" onClick={closeModal} className="text-xl leading-none px-2">&times;</button>
+        </div>
+
+        {/* Body */}
+        <div className="p-3 space-y-3 overflow-hidden flex flex-col h-full">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+            <textarea
+              className="w-full border rounded p-2 text-sm"
+              rows={4}
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
             />
-            <datalist id={`tag-options-${l.id}`}>
-              {(tagOptions[l.id] || []).map(opt => (
-                <option key={opt.id} value={opt.name} />
-              ))}
-            </datalist>
-            <button onClick={() => onAddTag(l.id, (tagInputs[l.id] || '').trim())}>Add</button>
+          </div>
+
+          <div className="flex">
+            <button type="button" onClick={onSummarize} className="ml-auto mr-auto inline-flex items-center justify-center h-8 px-3 text-sm font-medium rounded border border-gray-300 bg-white hover:bg-gray-100">IA summarize</button>
+          </div>
+
+          <div className="flex-1 min-h-0">
+            <label className="block text-xs font-medium text-gray-600 mb-1">Texte IA (résultat API)</label>
+            <div className="w-full border rounded p-2 text-sm h-full overflow-y-auto whitespace-pre-wrap">
+              {apiText || 'Le résultat de l\'API apparaîtra ici. Si le texte est long, vous pouvez faire défiler cette zone sans impacter le reste de la fenêtre.'}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex gap-2 flex-wrap">
-        <button onClick={() => onUpdateStatus(l.id, 'KEEP')}>Keep</button>
-        <button onClick={() => onUpdateStatus(l.id, 'LATER')}>Later</button>
-        <button onClick={() => onUpdateStatus(l.id, 'REJECT')}>Reject</button>
-        <button onClick={() => onAssignNext(l.id)}>Add to next TechWatch</button>
-        <button onClick={() => onDelete(l.id)} className="ml-auto">Delete</button>
+        {/* Resize handles */}
+        {/* Corners */}
+        <div onMouseDown={onResizeMouseDown('nw')} className="absolute -top-1 -left-1 w-3 h-3 cursor-nw-resize z-10" />
+        <div onMouseDown={onResizeMouseDown('ne')} className="absolute -top-1 -right-1 w-3 h-3 cursor-ne-resize z-10" />
+        <div onMouseDown={onResizeMouseDown('sw')} className="absolute -bottom-1 -left-1 w-3 h-3 cursor-sw-resize z-10" />
+        <div onMouseDown={onResizeMouseDown('se')} className="absolute -bottom-1 -right-1 w-3 h-3 cursor-se-resize z-10" />
+        {/* Edges */}
+        <div onMouseDown={onResizeMouseDown('n')} className="absolute -top-1 left-2 right-2 h-2 cursor-n-resize z-10" />
+        <div onMouseDown={onResizeMouseDown('s')} className="absolute -bottom-1 left-2 right-2 h-2 cursor-s-resize z-10" />
+        <div onMouseDown={onResizeMouseDown('w')} className="absolute top-2 bottom-2 -left-1 w-2 cursor-w-resize z-10" />
+        <div onMouseDown={onResizeMouseDown('e')} className="absolute top-2 bottom-2 -right-1 w-2 cursor-e-resize z-10" />
       </div>
-
-      {showMagic && (
-        <LinkEditModal link={l} onRequestClose={() => setShowMagic(false)} />
-      )}
-    </li>
+    </div>,
+    document.body
   )
 }
-
-export default LinkItem
