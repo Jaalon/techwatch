@@ -279,3 +279,22 @@ databaseChangeLog:
             sequenceName: LlmConfig_SEQ
             startValue: 1
             incrementBy: 50
+
+  - changeSet:
+      id: 5-prompt-instruction
+      author: junie
+      changes:
+        - createTable:
+            tableName: prompt_instruction
+            columns:
+              - column:
+                  name: type
+                  type: VARCHAR(100)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: content
+                  type: VARCHAR(4000)
+                  constraints:
+                    nullable: false
