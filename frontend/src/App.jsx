@@ -6,6 +6,12 @@ import TechWatchList from './components/TechWatchList'
 const API = '/api/links'
 const TECHWATCH_API = '/api/techwatch'
 
+import MainPage from './components/MainPage'
+import LinksTab from './components/tabs/LinksTab'
+import NextTab from './components/tabs/NextTab'
+import TechWatchsTab from './components/tabs/TechWatchsTab'
+import SettingsTab from './components/tabs/SettingsTab'
+
 function App() {
   const [links, setLinks] = useState([])
   const [form, setForm] = useState({ title: '', url: '', description: '' })
@@ -318,63 +324,39 @@ function App() {
     return lines.join('\n')
   }
 
-  return (
-    <div className="max-w-[900px] mx-auto my-8 px-4 text-left">
-      <h1>To consider</h1>
+  const linksContent = (
+    <LinksTab
+      links={links}
+      error={error}
+      form={form}
+      setForm={setForm}
+      submit={submit}
+      remove={remove}
+      updateStatus={updateStatus}
+      assignToNext={assignToNext}
+      onRemoveTag={removeTagFromLink}
+      onAddTag={addTagToLink}
+      tagInputs={tagInputs}
+      setTagInputs={setTagInputs}
+      tagOptions={tagOptions}
+      fetchTagOptions={fetchTagOptions}
+      query={query}
+      setQuery={setQuery}
+      status={status}
+      setStatus={setStatus}
+      page={page}
+      setPage={setPage}
+      size={size}
+      setSize={setSize}
+      total={total}
+      sort={sort}
+      setSort={setSort}
+    />
+  )
 
-      {/* TechWatch Panel */}
+  const techWatchsContent = (
+    <TechWatchsTab>
       <section className="border border-gray-300 p-4 mb-4 rounded">
-        <h2 className="mt-0">TechWatch</h2>
-        {/* Active TechWatch */}
-        {activeTechWatch ? (
-          <div className="mb-3">
-            <strong>Active TechWatch:</strong> {activeTechWatch.date} — max {activeTechWatch.maxArticles} articles — currently {activeLinks.length}
-            <div className="mt-2 flex gap-2">
-              <button onClick={() => collectNextLinks(activeTechWatch.id)}>Collect Next TechWatch links</button>
-              <button onClick={() => completeTechWatch(activeTechWatch.id)}>Complete</button>
-            </div>
-            {activeLinks.length > 0 && (
-              <div className="mt-2">
-                <details>
-                  <summary>Show articles ({activeLinks.length})</summary>
-                  <ul>
-                    {activeLinks.map(al => (
-                      <li key={al.id} className="flex items-center gap-2">
-                        <span>#{al.id} {al.title}</span>
-                        <button onClick={() => removeFromTechWatch(activeTechWatch.id, al.id)} className="ml-auto">Remove from this TechWatch</button>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              </div>
-            )}
-
-            {activeLinks.length > 0 && (
-              <div className="mt-2">
-                <h4 className="my-2">Articles groupés par catégorie</h4>
-                <GroupedByCategoryView
-                  links={activeLinks}
-                  onAddTag={addTagToLink}
-                  onRemoveTag={removeTagFromLink}
-                  onUpdateStatus={updateStatus}
-                  onAssignNext={assignToNext}
-                  onDelete={remove}
-                  tagInputs={tagInputs}
-                  setTagInputs={setTagInputs}
-                  tagOptions={tagOptions}
-                  fetchTagOptions={fetchTagOptions}
-                  mode="mvt"
-                  techWatchId={activeTechWatch.id}
-                  onRemoveFromTechWatch={removeFromTechWatch}
-                />
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="mb-3">No active TechWatch</div>
-        )}
-
-        {/* Create planned TechWatch */}
         <form onSubmit={createTechWatch} className="flex gap-2 flex-wrap items-center mb-3">
           <input type="date" value={techWatchForm.date} onChange={e => setTechWatchForm({ ...techWatchForm, date: e.target.value })} />
           <input type="number" min={1} max={100} value={techWatchForm.maxArticles}
@@ -383,11 +365,9 @@ function App() {
           <button type="submit">Create planned TechWatch</button>
         </form>
 
-        {/* Recent TechWatch */}
         <TechWatchList items={techWatches} onOpen={openTechWatchDetails} onActivate={activateTechWatch} onComplete={completeTechWatch} />
       </section>
 
-      {/* Opened TechWatch Details */}
       {openedTechWatch && (
         <section className="border border-gray-300 p-4 mb-4 rounded">
           <div className="flex items-center gap-2">
@@ -412,10 +392,9 @@ function App() {
                 onRemoveFromTechWatch={removeFromTechWatch}
               />
 
-              {/* Export Markdown (on demand) */}
               <div className="mt-4">
                 <button onClick={() => setShowMarkdown(v => !v)}>
-                  {showMarkdown ? 'Masquer l\'export Markdown' : 'Afficher l\'export Markdown'}
+                  {showMarkdown ? 'Hide Markdown export' : 'Show Markdown export'}
                 </button>
                 {showMarkdown && (() => {
                   let chosen = {}
@@ -438,8 +417,8 @@ function App() {
                       <h4 className="my-2">Export Markdown</h4>
                       <textarea readOnly value={md} rows={10} className="w-full font-mono text-sm"></textarea>
                       <div className="mt-2 flex gap-2">
-                        <button onClick={copyText}>Copier texte</button>
-                        <button onClick={download}>Télécharger .md</button>
+                        <button onClick={copyText}>Copy text</button>
+                        <button onClick={download}>Download .md</button>
                       </div>
                     </div>
                   )
@@ -451,64 +430,73 @@ function App() {
           )}
         </section>
       )}
+    </TechWatchsTab>
+  )
 
-      {/* Search and filter bar */}
-      <div className="flex gap-2 items-center mb-4">
-        <input
-          placeholder="Search..."
-          value={query}
-          onChange={e => { setPage(0); setQuery(e.target.value) }}
-          className="flex-1"
-        />
-        <select value={status} onChange={e => { setPage(0); setStatus(e.target.value) }}>
-          <option value="">All statuses</option>
-          <option value="TO_PROCESS">To process</option>
-          <option value="KEEP">Keep</option>
-          <option value="LATER">Later</option>
-          <option value="REJECT">Rejected</option>
-          <option value="NEXT_TECHWATCH">Next TechWatch</option>
-        </select>
-        <select value={sort} onChange={e => { setPage(0); setSort(e.target.value) }}>
-          <option value="date">Newest first</option>
-          <option value="title">Title (A→Z)</option>
-        </select>
-        <select value={size} onChange={e => { setPage(0); setSize(parseInt(e.target.value, 10)) }}>
-          <option value={5}>5</option>
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-        </select>
-      </div>
+  const nextContent = (
+    <section className="border border-gray-300 p-4 mb-4 rounded">
+      <h3 className="mt-0">Active TechWatch and management</h3>
+      {activeTechWatch ? (
+        <div className="mb-3">
+          <strong>Active TechWatch:</strong> {activeTechWatch.date} — max {activeTechWatch.maxArticles} articles — currently {activeLinks.length}
+          <div className="mt-2 flex gap-2">
+            <button onClick={() => collectNextLinks(activeTechWatch.id)}>Collect Next TechWatch links</button>
+            <button onClick={() => completeTechWatch(activeTechWatch.id)}>Complete</button>
+          </div>
+          {activeLinks.length > 0 && (
+            <div className="mt-2">
+              <details>
+                <summary>Show articles ({activeLinks.length})</summary>
+                <ul>
+                  {activeLinks.map(al => (
+                    <li key={al.id} className="flex items-center gap-2">
+                      <span>#{al.id} {al.title}</span>
+                      <button onClick={() => removeFromTechWatch(activeTechWatch.id, al.id)} className="ml-auto">Remove from this TechWatch</button>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </div>
+          )}
 
-      {/* Add form */}
-      <form onSubmit={submit} className="grid gap-2 mb-4">
-        <input placeholder="Title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
-        <input placeholder="URL" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} />
-        <textarea placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-        <button type="submit">Add</button>
-      </form>
-      {error && <div className="text-red-600">{error}</div>}
+          {activeLinks.length > 0 && (
+            <div className="mt-2">
+              <h4 className="my-2">Articles grouped by category</h4>
+              <GroupedByCategoryView
+                links={activeLinks}
+                onAddTag={addTagToLink}
+                onRemoveTag={removeTagFromLink}
+                onUpdateStatus={updateStatus}
+                onAssignNext={assignToNext}
+                onDelete={remove}
+                tagInputs={tagInputs}
+                setTagInputs={setTagInputs}
+                tagOptions={tagOptions}
+                fetchTagOptions={fetchTagOptions}
+                mode="mvt"
+                techWatchId={activeTechWatch.id}
+                onRemoveFromTechWatch={removeFromTechWatch}
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="mb-3">No active TechWatch</div>
+      )}
+    </section>
+  )
 
-      {/* List */}
-      <LinkList
-        links={links}
-        tagInputs={tagInputs}
-        setTagInputs={setTagInputs}
-        tagOptions={tagOptions}
-        fetchTagOptions={fetchTagOptions}
-        onRemoveTag={removeTagFromLink}
-        onAddTag={addTagToLink}
-        onUpdateStatus={updateStatus}
-        onAssignNext={assignToNext}
-        onDelete={remove}
-      />
+  const settingsContent = (
+    <SettingsTab />
+  )
 
-      {/* Pagination */}
-      <div className="flex gap-2 items-center">
-        <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>Prev</button>
-        <span>Page {page + 1} / {totalPages}</span>
-        <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>Next</button>
-      </div>
-    </div>
+  return (
+    <MainPage
+      LinksContent={linksContent}
+      NextContent={nextContent}
+      TechWatchsContent={techWatchsContent}
+      SettingsContent={settingsContent}
+    />
   )
 }
 
