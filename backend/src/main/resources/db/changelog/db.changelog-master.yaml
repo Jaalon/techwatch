@@ -151,3 +151,77 @@ databaseChangeLog:
                   name: link_id
         - sql:
             sql: "INSERT INTO link_techwatch (link_id, techwatch_id) SELECT id, techwatchId FROM link WHERE techwatchId IS NOT NULL"
+
+  - changeSet:
+      id: 3-tags-and-link-tag
+      author: junie
+      changes:
+        - createTable:
+            tableName: tag
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+        - addAutoIncrement:
+            tableName: tag
+            columnName: id
+            columnDataType: BIGINT
+        - addUniqueConstraint:
+            tableName: tag
+            columnNames: name
+            constraintName: UK_tag_name
+        - createSequence:
+            sequenceName: tag_SEQ
+            startValue: 1
+            incrementBy: 50
+        - createTable:
+            tableName: link_tag
+            columns:
+              - column:
+                  name: link_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tag_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: link_tag
+            columnNames: link_id, tag_id
+            constraintName: pk_link_tag
+        - addForeignKeyConstraint:
+            baseTableName: link_tag
+            baseColumnNames: link_id
+            constraintName: fk_link_tag_link
+            referencedTableName: link
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: link_tag
+            baseColumnNames: tag_id
+            constraintName: fk_link_tag_tag
+            referencedTableName: tag
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - createIndex:
+            tableName: link_tag
+            indexName: idx_link_tag_tag
+            columns:
+              - column:
+                  name: tag_id
+        - createIndex:
+            tableName: link_tag
+            indexName: idx_link_tag_link
+            columns:
+              - column:
+                  name: link_id

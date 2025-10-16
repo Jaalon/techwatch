@@ -11,6 +11,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jaalon.links.dto.LinkCreateDTO;
 import org.jaalon.links.dto.LinkUpdateDTO;
+import org.jaalon.tags.Tag;
+import org.jaalon.tags.TagRepository;
 
 import java.net.URI;
 import java.time.Instant;
@@ -27,6 +29,9 @@ public class LinkResource {
 
     @Inject
     org.jaalon.techwatch.TechWatchService techWatchService;
+
+    @Inject
+    TagRepository tagRepository;
 
     @GET
     public Response list(@QueryParam("status") String status,
@@ -136,5 +141,42 @@ public class LinkResource {
     public Response assignToNext(@PathParam("id") Long id) {
         org.jaalon.techwatch.TechWatch tw = techWatchService.assignLinkToNext(id);
         return Response.ok(tw).build();
+    }
+
+    // --- Tag management on links ---
+    public static class TagNameDTO { public String name; }
+
+    @POST
+    @Path("/{id}/tags")
+    @Transactional
+    public Link addTag(@PathParam("id") Long id, TagNameDTO dto) {
+        if (dto == null || dto.name == null || dto.name.isBlank()) {
+            throw new BadRequestException("Tag name is required");
+        }
+        String name = dto.name.trim();
+        Link link = repository.findById(id);
+        if (link == null) throw new NotFoundException();
+        Tag tag = tagRepository.find("lower(name) = ?1", name.toLowerCase()).firstResult();
+        if (tag == null) {
+            tag = new Tag();
+            tag.name = name;
+            tagRepository.persist(tag);
+        }
+        link.tags.add(tag);
+        return link;
+    }
+
+    @DELETE
+    @Path("/{id}/tags/{name}")
+    @Transactional
+    public Link removeTag(@PathParam("id") Long id, @PathParam("name") String name) {
+        if (name == null || name.isBlank()) throw new BadRequestException("Tag name is required");
+        Link link = repository.findById(id);
+        if (link == null) throw new NotFoundException();
+        Tag tag = tagRepository.find("lower(name) = ?1", name.toLowerCase()).firstResult();
+        if (tag != null) {
+            link.tags.remove(tag);
+        }
+        return link;
     }
 }

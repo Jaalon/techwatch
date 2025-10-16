@@ -39,13 +39,13 @@ Chaque tâche apporte une **fonctionnalité immédiatement utilisable** dans le 
   - Entité `MVT` (id, titre, date, statut)
   - Une seule MVT active à la fois
   - Ajout de liens à la MVT active via le statut “Prochaine MVT”
-- [ ] Organisation en catégories
+- [x] Organisation en catégories
   - Création libre de catégories
   - Association manuelle de liens à des catégories
-- [ ] Export texte brut
+- [ ] Export texte au format markdown
   - Génération du texte au format :
     ```
-    MVT — 2025-10-13
+    2025-10-13
     CATEGORIE 1
     - TITRE (URL) : DESCRIPTION
     ```

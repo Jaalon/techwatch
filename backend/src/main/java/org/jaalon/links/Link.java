@@ -8,7 +8,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
+
+import org.jaalon.tags.Tag;
 
 @Entity
 public class Link extends PanacheEntity {
@@ -44,6 +47,13 @@ public class Link extends PanacheEntity {
 
     @NotNull
     public Instant date = Instant.now();
+
+    // Tags/categories associated to this link
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "link_tag",
+            joinColumns = @JoinColumn(name = "link_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    public Set<Tag> tags = new LinkedHashSet<>();
 
     // Expose discoveredAt in JSON while keeping persisted field name as 'date'
     @JsonProperty("discoveredAt")

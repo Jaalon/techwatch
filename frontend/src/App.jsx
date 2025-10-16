@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import LinkList from './components/LinkList'
+import TechWatchList from './components/TechWatchList'
 
 const API = '/api/links'
 const TECHWATCH_API = '/api/techwatch'
@@ -8,6 +10,8 @@ function App() {
   const [links, setLinks] = useState([])
   const [form, setForm] = useState({ title: '', url: '', description: '' })
   const [error, setError] = useState('')
+  const [tagInputs, setTagInputs] = useState({}) // { [linkId]: text }
+  const [tagOptions, setTagOptions] = useState({}) // { [linkId]: [{id,name}] }
 
   // TechWatch state
   const [activeTechWatch, setActiveTechWatch] = useState(null)
@@ -232,84 +236,148 @@ function App() {
     if (activeTechWatch) await loadActiveLinks(activeTechWatch.id)
   }
 
+  // Tagging helpers
+  const fetchTagOptions = async (id, text) => {
+    try {
+      if (!text) { setTagOptions(prev => ({ ...prev, [id]: [] })); return }
+      const res = await fetch(`/api/tags?q=${encodeURIComponent(text)}&limit=10`)
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      setTagOptions(prev => ({ ...prev, [id]: Array.isArray(data) ? data : [] }))
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const addTagToLink = async (id, name) => {
+    if (!name) return
+    try {
+      const res = await fetch(`${API}/${id}/tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      })
+      if (!res.ok) throw new Error(await res.text())
+      setTagInputs(prev => ({ ...prev, [id]: '' }))
+      setTagOptions(prev => ({ ...prev, [id]: [] }))
+      await load()
+      if (activeTechWatch) await loadActiveLinks(activeTechWatch.id)
+      if (openedTechWatch) await loadOpenedLinks(openedTechWatch.id)
+    } catch (e) {
+      console.error(e)
+      setError(`Failed to add tag: ${e.message}`)
+    }
+  }
+
+  const removeTagFromLink = async (id, name) => {
+    try {
+      const res = await fetch(`${API}/${id}/tags/${encodeURIComponent(name)}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(await res.text())
+      await load()
+      if (activeTechWatch) await loadActiveLinks(activeTechWatch.id)
+      if (openedTechWatch) await loadOpenedLinks(openedTechWatch.id)
+    } catch (e) {
+      console.error(e)
+      setError(`Failed to remove tag: ${e.message}`)
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / size))
 
   return (
-    <div style={{ maxWidth: 900, margin: '2rem auto', padding: '0 1rem' }}>
+    <div className="max-w-[900px] mx-auto my-8 px-4 text-left">
       <h1>To consider</h1>
 
       {/* TechWatch Panel */}
-      <section style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
-        <h2 style={{ marginTop: 0 }}>TechWatch</h2>
+      <section className="border border-gray-300 p-4 mb-4 rounded">
+        <h2 className="mt-0">TechWatch</h2>
         {/* Active TechWatch */}
         {activeTechWatch ? (
-          <div style={{ marginBottom: '0.75rem' }}>
+          <div className="mb-3">
             <strong>Active TechWatch:</strong> {activeTechWatch.date} — max {activeTechWatch.maxArticles} articles — currently {activeLinks.length}
-            <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+            <div className="mt-2 flex gap-2">
               <button onClick={() => collectNextLinks(activeTechWatch.id)}>Collect Next TechWatch links</button>
               <button onClick={() => completeTechWatch(activeTechWatch.id)}>Complete</button>
             </div>
             {activeLinks.length > 0 && (
-              <div style={{ marginTop: '0.5rem' }}>
+              <div className="mt-2">
                 <details>
                   <summary>Show articles ({activeLinks.length})</summary>
                   <ul>
                     {activeLinks.map(al => (
-                      <li key={al.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <li key={al.id} className="flex items-center gap-2">
                         <span>#{al.id} {al.title}</span>
-                        <button onClick={() => removeFromTechWatch(activeTechWatch.id, al.id)} style={{ marginLeft: 'auto' }}>Remove from this TechWatch</button>
+                        <button onClick={() => removeFromTechWatch(activeTechWatch.id, al.id)} className="ml-auto">Remove from this TechWatch</button>
                       </li>
                     ))}
                   </ul>
                 </details>
               </div>
             )}
+
+            {activeLinks.length > 0 && (
+              <div className="mt-2">
+                <h4 className="my-2">Articles groupés par catégorie</h4>
+                <GroupedByCategoryView
+                  links={activeLinks}
+                  onAddTag={addTagToLink}
+                  onRemoveTag={removeTagFromLink}
+                  onUpdateStatus={updateStatus}
+                  onAssignNext={assignToNext}
+                  onDelete={remove}
+                  tagInputs={tagInputs}
+                  setTagInputs={setTagInputs}
+                  tagOptions={tagOptions}
+                  fetchTagOptions={fetchTagOptions}
+                  mode="mvt"
+                  techWatchId={activeTechWatch.id}
+                  onRemoveFromTechWatch={removeFromTechWatch}
+                />
+              </div>
+            )}
           </div>
         ) : (
-          <div style={{ marginBottom: '0.75rem' }}>No active TechWatch</div>
+          <div className="mb-3">No active TechWatch</div>
         )}
 
         {/* Create planned TechWatch */}
-        <form onSubmit={createTechWatch} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
+        <form onSubmit={createTechWatch} className="flex gap-2 flex-wrap items-center mb-3">
           <input type="date" value={techWatchForm.date} onChange={e => setTechWatchForm({ ...techWatchForm, date: e.target.value })} />
           <input type="number" min={1} max={100} value={techWatchForm.maxArticles}
                  onChange={e => setTechWatchForm({ ...techWatchForm, maxArticles: parseInt(e.target.value || '10', 10) })}
-                 title="Max articles" style={{ width: '8rem' }} />
+                 title="Max articles" className="w-32" />
           <button type="submit">Create planned TechWatch</button>
         </form>
 
         {/* Recent TechWatch */}
-        <div>
-          <strong>Recent TechWatch</strong>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {techWatches.slice(0, 5).map(m => (
-              <li key={m.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0.25rem 0' }}>
-                <span>#{m.id} — {m.date} — {m.status}</span>
-                <button onClick={() => openTechWatchDetails(m)}>Open</button>
-                <button onClick={() => activateTechWatch(m.id)} disabled={m.status === 'ACTIVE'}>Activate</button>
-                <button onClick={() => completeTechWatch(m.id)} disabled={m.status === 'COMPLETED'}>Complete</button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <TechWatchList items={techWatches} onOpen={openTechWatchDetails} onActivate={activateTechWatch} onComplete={completeTechWatch} />
       </section>
 
       {/* Opened TechWatch Details */}
       {openedTechWatch && (
-        <section style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <h3 style={{ margin: 0 }}>Opened TechWatch: #{openedTechWatch.id} — {openedTechWatch.date} — {openedTechWatch.status}</h3>
-            <button onClick={() => { setOpenedTechWatch(null); setOpenedLinks([]) }} style={{ marginLeft: 'auto' }}>Close</button>
+        <section className="border border-gray-300 p-4 mb-4 rounded">
+          <div className="flex items-center gap-2">
+            <h3 className="m-0">Opened TechWatch: #{openedTechWatch.id} — {openedTechWatch.date} — {openedTechWatch.status}</h3>
+            <button onClick={() => { setOpenedTechWatch(null); setOpenedLinks([]) }} className="ml-auto">Close</button>
           </div>
           {openedLinks.length > 0 ? (
-            <ul>
-              {openedLinks.map(al => (
-                <li key={al.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span>#{al.id} {al.title}</span>
-                  <button onClick={() => removeFromTechWatch(openedTechWatch.id, al.id)} style={{ marginLeft: 'auto' }}>Remove from this TechWatch</button>
-                </li>
-              ))}
-            </ul>
+            <div>
+              <GroupedByCategoryView
+                links={openedLinks}
+                onAddTag={addTagToLink}
+                onRemoveTag={removeTagFromLink}
+                onUpdateStatus={updateStatus}
+                onAssignNext={assignToNext}
+                onDelete={remove}
+                tagInputs={tagInputs}
+                setTagInputs={setTagInputs}
+                tagOptions={tagOptions}
+                fetchTagOptions={fetchTagOptions}
+                mode="mvt"
+                techWatchId={openedTechWatch.id}
+                onRemoveFromTechWatch={removeFromTechWatch}
+              />
+            </div>
           ) : (
             <div>No articles in this TechWatch.</div>
           )}
@@ -317,12 +385,12 @@ function App() {
       )}
 
       {/* Search and filter bar */}
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '1rem' }}>
+      <div className="flex gap-2 items-center mb-4">
         <input
           placeholder="Search..."
           value={query}
           onChange={e => { setPage(0); setQuery(e.target.value) }}
-          style={{ flex: 1 }}
+          className="flex-1"
         />
         <select value={status} onChange={e => { setPage(0); setStatus(e.target.value) }}>
           <option value="">All statuses</option>
@@ -344,49 +412,184 @@ function App() {
       </div>
 
       {/* Add form */}
-      <form onSubmit={submit} style={{ display: 'grid', gap: '0.5rem', marginBottom: '1rem' }}>
+      <form onSubmit={submit} className="grid gap-2 mb-4">
         <input placeholder="Title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
         <input placeholder="URL" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} />
         <textarea placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
         <button type="submit">Add</button>
       </form>
-      {error && <div style={{ color: 'red' }}>{error}</div>}
+      {error && <div className="text-red-600">{error}</div>}
 
       {/* List */}
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {links.map(l => {
-          const when = l.discoveredAt || l.date
-          const whenTxt = when ? new Date(when).toLocaleString() : ''
-          return (
-            <li key={l.id} style={{ border: '1px solid #ddd', padding: '0.75rem', marginBottom: '0.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <strong>{l.title}</strong>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <small title="Discovered at">{whenTxt}</small>
-                  <small>{l.status}</small>
-                </div>
-              </div>
-              <div>
-                <a href={l.url} target="_blank" rel="noreferrer">{l.url}</a>
-              </div>
-              {l.description && <p>{l.description}</p>}
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button onClick={() => updateStatus(l.id, 'KEEP')}>Keep</button>
-                <button onClick={() => updateStatus(l.id, 'LATER')}>Later</button>
-                <button onClick={() => updateStatus(l.id, 'REJECT')}>Reject</button>
-                <button onClick={() => assignToNext(l.id)}>Add to next TechWatch</button>
-                <button onClick={() => remove(l.id)} style={{ marginLeft: 'auto' }}>Delete</button>
-              </div>
-            </li>
-          )
-        })}
-      </ul>
+      <LinkList
+        links={links}
+        tagInputs={tagInputs}
+        setTagInputs={setTagInputs}
+        tagOptions={tagOptions}
+        fetchTagOptions={fetchTagOptions}
+        onRemoveTag={removeTagFromLink}
+        onAddTag={addTagToLink}
+        onUpdateStatus={updateStatus}
+        onAssignNext={assignToNext}
+        onDelete={remove}
+      />
 
       {/* Pagination */}
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+      <div className="flex gap-2 items-center">
         <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>Prev</button>
         <span>Page {page + 1} / {totalPages}</span>
         <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>Next</button>
+      </div>
+    </div>
+  )
+}
+
+// ---- GroupedByCategoryView component ----
+function GroupedByCategoryView({
+  links,
+  onAddTag,
+  onRemoveTag,
+  onUpdateStatus,
+  onAssignNext,
+  onDelete,
+  tagInputs,
+  setTagInputs,
+  tagOptions,
+  fetchTagOptions,
+  mode,
+  techWatchId,
+  onRemoveFromTechWatch
+}) {
+  const [chosenCategory, setChosenCategory] = useState({}) // { [linkId]: tagName | 'Uncategorized' }
+  const [draggingLinkId, setDraggingLinkId] = useState(null)
+  const [showBottomChooserFor, setShowBottomChooserFor] = useState(null)
+
+  const allTagNames = Array.from(new Set((links || []).flatMap(l => (l.tags || []).map(t => t.name)))).sort((a, b) => a.localeCompare(b))
+  const UNCATEGORIZED = 'Uncategorized'
+
+  const getChosenCatFor = (l) => {
+    const desired = chosenCategory[l.id]
+    const tagNames = (l.tags || []).map(t => t.name)
+    if (desired && (desired === UNCATEGORIZED || tagNames.includes(desired))) return desired
+    if (tagNames.length > 0) return tagNames[0]
+    return UNCATEGORIZED
+  }
+
+  // Build groups
+  const groups = {}
+  allTagNames.forEach(t => { groups[t] = [] })
+  groups[UNCATEGORIZED] = []
+  for (const l of links || []) {
+    const cat = getChosenCatFor(l)
+    if (!groups[cat]) groups[cat] = []
+    groups[cat].push(l)
+  }
+
+  const onDragStart = (e, l) => {
+    setDraggingLinkId(l.id)
+    setShowBottomChooserFor(null)
+    const payload = { id: l.id, tags: (l.tags || []).map(t => t.name) }
+    e.dataTransfer.setData('application/json', JSON.stringify(payload))
+    e.dataTransfer.effectAllowed = 'move'
+  }
+  const onDragEnd = () => {
+    setDraggingLinkId(null)
+    setShowBottomChooserFor(null)
+  }
+
+  const makeCategoryDroppableProps = (categoryName) => ({
+    onDragOver: (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' },
+    onDrop: (e) => {
+      try {
+        const txt = e.dataTransfer.getData('application/json') || '{}'
+        const data = JSON.parse(txt)
+        const allowed = Array.isArray(data.tags) && data.tags.includes(categoryName)
+        if (allowed) {
+          setChosenCategory(prev => ({ ...prev, [data.id]: categoryName }))
+        }
+      } catch (err) { /* ignore */ }
+      setShowBottomChooserFor(null)
+    },
+    onDragEnter: () => setShowBottomChooserFor(null)
+  })
+
+  const bottomZoneProps = {
+    onDragOver: (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' },
+    onDragEnter: () => setShowBottomChooserFor(draggingLinkId),
+    onDrop: () => setShowBottomChooserFor(null)
+  }
+
+  const isMvt = mode === 'mvt'
+
+  const renderBullet = (l) => (
+    <li key={l.id}
+        draggable
+        onDragStart={(e) => onDragStart(e, l)}
+        onDragEnd={onDragEnd}
+        className="py-1 rounded cursor-grab flex items-center">
+      {isMvt ? null : <span>- </span>}
+      <a href={l.url} target="_blank" rel="noreferrer">{l.title}</a>
+      {isMvt ? (
+        <>
+          {l.description ? <span className="ml-1">: {l.description}</span> : null}
+          <button
+            title="Remove from this TechWatch"
+            onClick={() => onRemoveFromTechWatch && techWatchId && onRemoveFromTechWatch(techWatchId, l.id)}
+            className="ml-auto text-gray-500 hover:text-gray-700"
+          >&times;</button>
+        </>
+      ) : (
+        <>
+          <span>[{l.url}]</span>
+          {l.description ? <span>: {l.description}</span> : null}
+          <span className="ml-auto inline-flex gap-1">
+            <button onClick={() => onUpdateStatus(l.id, 'KEEP')}>Keep</button>
+            <button onClick={() => onUpdateStatus(l.id, 'LATER')}>Later</button>
+            <button onClick={() => onUpdateStatus(l.id, 'REJECT')}>Reject</button>
+            <button onClick={() => onAssignNext(l.id)}>Next TW</button>
+            <button onClick={() => onDelete(l.id)}>Del</button>
+          </span>
+        </>
+      )}
+    </li>
+  )
+
+  return (
+    <div>
+      {Object.keys(groups).filter(k => groups[k].length > 0 || k === UNCATEGORIZED).map((cat) => (
+        <section key={cat} className="border border-gray-300 px-3 py-2 mb-3 rounded" {...(cat !== UNCATEGORIZED ? makeCategoryDroppableProps(cat) : {})}>
+          <div className="font-bold mb-1">{cat}</div>
+          <ul className="m-0 pl-4">
+            {groups[cat].map(renderBullet)}
+          </ul>
+        </section>
+      ))}
+
+      {/* Bottom chooser area: appears when dragging and under the last category */}
+      <div className="border-2 border-dashed border-gray-400 p-3 text-center text-gray-600" {...bottomZoneProps}>
+        {showBottomChooserFor ? (
+          (() => {
+            const l = (links || []).find(x => x.id === showBottomChooserFor)
+            const tagNames = (l?.tags || []).map(t => t.name)
+            if (!l || tagNames.length === 0) return <span>Drop here to cancel</span>
+            return (
+              <div className="inline-flex gap-2 flex-wrap items-center">
+                <span>Choose category:</span>
+                {tagNames.map(name => (
+                  <div key={name}
+                       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+                       onDrop={() => { setChosenCategory(prev => ({ ...prev, [l.id]: name })); setShowBottomChooserFor(null) }}
+                       onClick={() => { setChosenCategory(prev => ({ ...prev, [l.id]: name })); setShowBottomChooserFor(null) }}
+                       className="px-2 py-1 border border-indigo-300 bg-indigo-50 rounded-full cursor-pointer">
+                    {name}
+                  </div>
+                ))}
+              </div>
+            )
+          })()
+        ) : (
+          <span>Drag a link here to choose its category from its tags</span>
+        )}
       </div>
     </div>
   )
