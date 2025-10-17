@@ -1,7 +1,7 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
-import { updateLinkDescription } from '../api/links'
-import { summarizeLink } from '../api/ai'
+import { updateLinkDescription } from '../../api/links'
+import { summarizeLink } from '../../api/ai'
 
 export default function LinkEditModal({ link, onRequestClose }) {
   const l = link

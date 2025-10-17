@@ -4,7 +4,7 @@
 - **Automatiser** la collecte multi-sources pour la Minute Veille Techno (MVT).
 - **Centraliser** les liens, statuts et décisions (garder/rejeter/plus tard/prochaine MVT).
 - **Accélérer** la préparation via **résumés LLM** (modèle local ou API externe).
-- **Restituer** en texte brut **avec mise en forme et liens cliquables**, prêt à coller dans Confluence.
+- **Restituer** en Markdown **avec mise en forme et liens cliquables**, prêt à coller dans Confluence et Notion.
 - **Préserver le contrôle humain** sur la catégorisation et la sélection finale.
 
 ---
