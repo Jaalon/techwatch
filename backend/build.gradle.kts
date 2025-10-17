@@ -26,8 +26,9 @@ dependencies {
     implementation("io.quarkus:quarkus-arc")
     implementation("io.quarkus:quarkus-hibernate-orm")
     implementation("io.quarkus:quarkus-liquibase")
-    // TODO: Integrate ChromaDB client via HTTP for semantic search (no direct Gradle dep needed if using plain HTTP)
+    implementation("io.quarkiverse.langchain4j:quarkus-langchain4j-openai:1.3.1")
     testImplementation("io.quarkus:quarkus-junit5")
+    testImplementation("io.quarkus:quarkus-junit5-mockito")
     testImplementation("io.rest-assured:rest-assured")
 }
 

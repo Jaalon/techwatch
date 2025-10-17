@@ -33,6 +33,9 @@ public class LinkResource {
     @Inject
     TagRepository tagRepository;
 
+    @Inject
+    SummarizationService summarizationService;
+
     @GET
     public Response list(@QueryParam("status") String status,
                          @QueryParam("q") String q,
@@ -132,6 +135,18 @@ public class LinkResource {
         boolean deleted = repository.deleteById(id);
         if (!deleted) throw new NotFoundException();
         return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/{id}/summarize")
+    @Consumes(MediaType.WILDCARD)
+    @Transactional
+    public Link summarize(@PathParam("id") Long id) {
+        Link link = repository.findById(id);
+        if (link == null) throw new NotFoundException();
+        String summary = summarizationService.summarize(link.url);
+        link.summary = summary;
+        return link;
     }
 
     @POST

@@ -298,3 +298,14 @@ databaseChangeLog:
                   type: VARCHAR(4000)
                   constraints:
                     nullable: false
+
+  - changeSet:
+      id: 8-add-summary-to-link
+      author: junie
+      changes:
+        - addColumn:
+            tableName: link
+            columns:
+              - column:
+                  name: summary
+                  type: VARCHAR(8000)

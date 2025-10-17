@@ -28,6 +28,9 @@ public class Link extends PanacheEntity {
     @Size(max = 4000)
     public String description;
 
+    @Size(max = 8000)
+    public String summary;
+
     @NotNull
     @Enumerated(EnumType.STRING)
     public LinkStatus status = LinkStatus.TO_PROCESS;

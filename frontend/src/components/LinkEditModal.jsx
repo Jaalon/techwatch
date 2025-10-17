@@ -16,7 +16,7 @@ export default function LinkEditModal({ link, onRequestClose }) {
   const resizeStartRef = React.useRef({ x: 0, y: 0, w: 0, h: 0, startX: 0, startY: 0, dir: 'se' })
 
   const [desc, setDesc] = React.useState(l.description || '')
-  const [apiText, setApiText] = React.useState('')
+  const [apiText, setApiText] = React.useState(l.summary || '')
 
   // Position the modal on mount: center horizontally; top aligned under tabs if found
   React.useEffect(() => {
@@ -36,6 +36,11 @@ export default function LinkEditModal({ link, onRequestClose }) {
     }
     setModalPos({ x, y })
   }, [modalSize.w, modalSize.h])
+
+  // Prefill AI text when opening or when link changes
+  React.useEffect(() => {
+    setApiText(l.summary || '')
+  }, [l && l.id, l && l.summary])
 
   const closeModal = React.useCallback(async () => {
     try {
