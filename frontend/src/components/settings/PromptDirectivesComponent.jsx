@@ -47,7 +47,7 @@ export default function PromptDirectivesComponent() {
         onClick={() => setDirOpen(o => !o)}
         aria-expanded={dirOpen}
         aria-controls="prompt-directives-panel"
-        className="w-full text-left bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-slate-100 p-[10px] px-[14px] text-[16px] cursor-pointer flex items-center gap-2"
+        className="w-full text-left tw-collapsible-header p-[10px] px-[14px] text-[16px] cursor-pointer flex items-center gap-2"
         style={{ border: 'none' }}
       >
         <span style={{
@@ -62,23 +62,23 @@ export default function PromptDirectivesComponent() {
           id="prompt-directives-panel"
           role="region"
           aria-label="Prompt directives"
-          className="p-[12px] px-[14px] bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+          className="p-[12px] px-[14px] tw-modal-surface"
         >
           {/* Requested change: remove the descriptive sentence */}
-          {dirError && <div className="mb-2 text-red-600 text-sm">{dirError}</div>}
-          <label className="block text-sm mb-1" htmlFor="summarize-instructions">Summarize instructions</label>
+          {dirError && <div className="tw-error mb-2">{dirError}</div>}
+          <label className="block text-sm mb-1 tw-text-muted" htmlFor="summarize-instructions">Summarize instructions</label>
           <textarea
             id="summarize-instructions"
-            className="w-full min-h[140px]"
+            className="tw-textarea w-full min-h-[140px]"
             value={summarizeText}
             onChange={e => setSummarizeText(e.target.value)}
             placeholder="Write the default summarize instructions here..."
           />
           <div className="mt-2 flex items-center gap-2">
-            <button onClick={onSaveDirectives} disabled={dirSaving} className="px-3 py-2 border rounded opacity-100 disabled:opacity-50">
+            <button onClick={onSaveDirectives} disabled={dirSaving} className="tw-btn">
               {dirSaving ? 'Saving…' : 'Save'}
             </button>
-            {dirLoading && <span className="text-sm text-gray-500">Loading…</span>}
+            {dirLoading && <span className="text-sm tw-text-muted">Loading…</span>}
           </div>
         </div>
       )}

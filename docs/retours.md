@@ -21,37 +21,39 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
   * Show markdown doit être un modal
 * Settings:
   * revoir la présentation des llms, afficher juste le nom
-
-
-## Architecture
-
-* Revoir la structure de la UI afin d’avoir des "boîtes" cohérentes et plus faciles à comprendre/styliser.
-
-### Front
-
-À voir:
-* Gestion des popups
-* Popup pour ajouter un lien
-* Popup d’édition d’un lien
 * Export Markdown -> popup avec téléchargement possible, ne pas afficher la date
 * TechWatchComponent -> affiche la date de la mvt, possibilité de modifier un lien (popup), possibilité de modifier le nombre maximal de liens)
 * Add LLM -> popup
 * Prompt directives -> champ texte plus grand
 * Merger LinkListComponent et LinkList
 
+## Architecture
+
+* Revoir la structure de la UI afin d’avoir des "boîtes" cohérentes et plus faciles à comprendre/styliser.
+
 ## Résumé LLM
 
-* Le LLM (perplexity) ne semble pas arriver à accéder aux articles, il faudrait rapatrier le contenu pour le résumé. 
+* Configuration LLM : ajouter la possibilité de supprimer un modèle, bouton de suppression (croix même style que la croix close de la modale, mais avec la croix en rouge). Ce style d’élément doit être entré comme un style CSS commun.
+* Ajouter la possibilité d’invalider un résumé IA
+* Résumer un article depuis le lien ou depuis le contenu sauvegardé
 
-## Workflow d’utilisation
+## plugin browser
+
+* Lancer le résumé IA depuis le plugin browser
+* Extraire le contenu d’un article depuis le plugin au cas où l’IA n’arrive pas à y accéder
+* Si le lien existe déjà en base de données, récupérer les infos depuis l’API backend et ajouter des interactions possibles depuis le plugin browser
 
 ## Fonctionnalités
 
 * Tri par articles qui se sont pas dans une mvt
 
-## Build
-
 ## Bugs
 
 * Certaines catégories ne semblent pas être fixe. Peut être lorsqu’un article est ajouté à une mvt, à fouiller (ex: Article 1 qui oscille entre DevSecOps et IA)
 * Problème du bouton "Add to next TechWatch" qui n’est pas désactivé si la mvt est déjà présente
+
+# Pour plus tard
+
+## IA configuration
+
+* Séparer la gestion des clés de la gestion des modèles histoire d’éviter d’avoir à ajouter à chaque fois la clé à utiliser.

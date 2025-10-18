@@ -24,6 +24,8 @@ export default function LinkEditModal({ link, onRequestClose, onSaved }) {
     const [status, setStatus] = React.useState(l.status || '')
     const [assigningNext, setAssigningNext] = React.useState(false)
     const [assignedNext, setAssignedNext] = React.useState(false)
+    const [summarizeLoading, setSummarizeLoading] = React.useState(false)
+    const [summarizeError, setSummarizeError] = React.useState('')
 
     // Ref to the inner fields box (the bordered container) to keep it scrollbar-free
     const fieldsBoxRef = React.useRef(null)
@@ -246,13 +248,23 @@ export default function LinkEditModal({ link, onRequestClose, onSaved }) {
     }, [closeModal, saveAndClose])
 
     const onSummarize = async () => {
+        if (summarizeLoading) return
+        setSummarizeError('')
+        setSummarizeLoading(true)
         try {
             const r = await summarizeLink(l.id)
-            if (r && (r.summary || r.text)) {
-                setApiText(r.summary || r.text)
+            const txt = r && (r.summary || r.text)
+            if (txt) {
+                setApiText(txt)
+                setSummarizeError('')
+            } else {
+                setSummarizeError('Empty response from LLM')
             }
         } catch (e) {
             console.error(e)
+            setSummarizeError(e?.message || 'Summarize failed')
+        } finally {
+            setSummarizeLoading(false)
         }
     }
 
@@ -352,8 +364,10 @@ export default function LinkEditModal({ link, onRequestClose, onSaved }) {
                                 />
                             </div>
                         ) : (
-                            <div>
-                                <button type="button" onClick={onSummarize} className="tw-btn">IA summarize</button>
+                            <div className="flex items-center gap-2">
+                                <button type="button" onClick={onSummarize} className="tw-btn" disabled={summarizeLoading}>IA summarize</button>
+                                {summarizeLoading && <span className="text-sm tw-text-muted">Summarize in progress…</span>}
+                                {!summarizeLoading && summarizeError && <span className="tw-error">{summarizeError}</span>}
                             </div>
                         )}
                     </div>

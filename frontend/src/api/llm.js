@@ -32,3 +32,23 @@ export async function setDefaultConfig(id) {
   if (!res.ok) throw new Error(await res.text().catch(() => ''))
   return await res.json()
 }
+
+export async function listMistralModels(baseUrl, apiKey) {
+  const res = await fetch(`${BASE}/mistral/models`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ baseUrl, apiKey })
+  })
+  const text = await res.text().catch(() => '')
+  let json
+  try { json = text ? JSON.parse(text) : null } catch { json = null }
+  if (res.status === 200) {
+    const arr = Array.isArray(json?.data) ? json.data : []
+    return arr
+  }
+  if (res.status === 422) {
+    const msg = (json && Array.isArray(json.detail) && json.detail[0] && json.detail[0].msg) ? json.detail[0].msg : (text || 'Unprocessable Entity')
+    throw new Error(msg)
+  }
+  throw new Error(`Failed to fetch models: HTTP ${res.status}`)
+}

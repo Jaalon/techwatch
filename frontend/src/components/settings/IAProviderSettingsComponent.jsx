@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import { listConfigs as apiListConfigs, setDefaultConfig as apiSetDefaultConfig } from '../../api/llm'
-import AddLlmProviderModal from './AddLlmProviderModal.jsx'
+import AddPerplexityProviderModal from './AddPerplexityProviderModal.jsx'
+import AddDockerProviderModal from './AddDockerProviderModal.jsx'
+import AddSelfManagedProviderModal from './AddSelfManagedProviderModal.jsx'
+import AddOpenAiProviderModal from './AddOpenAiProviderModal.jsx'
+import AddMistralProviderModal from './AddMistralProviderModal.jsx'
 
 export default function IAProviderSettingsComponent() {
   const [isOpen, setIsOpen] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [provider, setProvider] = useState('perplexity')
 
   const [configs, setConfigs] = useState([])
 
@@ -41,7 +46,7 @@ export default function IAProviderSettingsComponent() {
         onClick={() => setIsOpen(o => !o)}
         aria-expanded={isOpen}
         aria-controls="ia-api-config-panel"
-        className="w-full text-left bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-slate-100 p-[10px] px-[14px] text-[16px] cursor-pointer flex items-center gap-2"
+        className="w-full text-left tw-collapsible-header p-[10px] px-[14px] text-[16px] cursor-pointer flex items-center gap-2"
         style={{ border: 'none' }}
       >
         <span style={{
@@ -57,24 +62,34 @@ export default function IAProviderSettingsComponent() {
           id="ia-api-config-panel"
           role="region"
           aria-label="IA API Configuration"
-          className="p-[12px] px-[14px] bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+          className="p-[12px] px-[14px] tw-modal-surface"
         >
           <p className="mt-0">Gérez les configurations LLM.</p>
 
           <div className="flex justify-between items-center mb-2">
-            <button onClick={openModal} className="px-3 py-1 border rounded">Add LLM</button>
+            <div className="flex items-center gap-2">
+              <label className="text-sm tw-text-muted" htmlFor="provider-select">Type</label>
+              <select id="provider-select" className="tw-select" value={provider} onChange={e => setProvider(e.target.value)}>
+                <option value="docker">Docker</option>
+                <option value="self-managed">Self-Managed</option>
+                <option value="openai">OpenAI</option>
+                <option value="perplexity">Perplexity</option>
+                <option value="mistral">Mistral</option>
+              </select>
+              <button onClick={openModal} className="tw-btn tw-btn--sm">Add LLM</button>
+            </div>
           </div>
 
           {configs.length > 0 ? (
             <ul className="space-y-2">
               {configs.map(c => (
-                <li key={c.id} className="flex items-center gap-3 border border-gray-200 dark:border-gray-700 rounded p-2">
+                <li key={c.id} className="flex items-center gap-3 tw-panel p-2">
                   <div className="flex-1">
                     <div className="font-medium">{c.name} {c.isDefault && <span className="ml-2 text-xs text-green-600">(default)</span>}</div>
                     <div className="text-xs text-gray-600 dark:text-gray-400">{c.model} • {c.baseUrl}</div>
                   </div>
                   <button
-                    className="text-sm px-2 py-1 border rounded"
+                    className="tw-btn tw-btn--sm"
                     onClick={() => setDefault(c.id)}
                     disabled={c.isDefault}
                     title={c.isDefault ? 'Déjà par défaut' : 'Définir par défaut'}
@@ -83,13 +98,38 @@ export default function IAProviderSettingsComponent() {
               ))}
             </ul>
           ) : (
-            <div className="text-sm text-gray-600">Aucune configuration enregistrée.</div>
+            <div className="text-sm tw-text-muted">Aucune configuration enregistrée.</div>
           )}
         </div>
       )}
 
-      {showModal && (
-        <AddLlmProviderModal
+      {showModal && provider === 'perplexity' && (
+        <AddPerplexityProviderModal
+          isOpen={showModal}
+          onRequestClose={closeModal}
+          onSaved={loadConfigs}
+        />
+      )}
+      {showModal && provider === 'docker' && (
+        <AddDockerProviderModal
+          isOpen={showModal}
+          onRequestClose={closeModal}
+        />
+      )}
+      {showModal && provider === 'self-managed' && (
+        <AddSelfManagedProviderModal
+          isOpen={showModal}
+          onRequestClose={closeModal}
+        />
+      )}
+      {showModal && provider === 'openai' && (
+        <AddOpenAiProviderModal
+          isOpen={showModal}
+          onRequestClose={closeModal}
+        />
+      )}
+      {showModal && provider === 'mistral' && (
+        <AddMistralProviderModal
           isOpen={showModal}
           onRequestClose={closeModal}
           onSaved={loadConfigs}

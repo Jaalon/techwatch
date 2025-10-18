@@ -42,6 +42,9 @@
   --color-tab-active-bg: #f3f4f6; /* gray-100 to match content panel */
   /* Search bar */
   --color-searchbar-bg: #e5e7eb; /* gray-200, slightly darker than panel */
+
+  /* Section headers */
+  --color-section-header-bg: #e5e7eb; /* gray-200: darkest among standard surfaces */
 }
 
 /* Dark theme overrides */
@@ -81,6 +84,9 @@
   --color-tab-active-bg: #0f172a; /* match content panel (tw-panel) */
   /* Search bar */
   --color-searchbar-bg: #0b1220; /* slightly darker than panel in dark mode */
+
+  /* Section headers */
+  --color-section-header-bg: #0b1220; /* slightly darker than panel: ensures the darkest header */
 }
 
 /* Default palette reference (for documentation only)
@@ -112,6 +118,12 @@
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   padding: 0.5rem 0.75rem; /* py-2 px-3 */
+}
+
+/* Collapsible section header (inside bordered sections) */
+.tw-collapsible-header {
+  background: var(--color-section-header-bg);
+  color: var(--color-text);
 }
 /* Tabs */
 .tw-tab {
