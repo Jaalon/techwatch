@@ -1,23 +1,20 @@
 import React, { useEffect, useState } from 'react'
+import LinkEditModal from '../links/LinkEditModal'
 
 function GroupedByCategoryView({
   links,
-  onAddTag,
-  onRemoveTag,
-  onUpdateStatus,
-  onAssignNext,
-  onDelete,
-  tagInputs,
-  setTagInputs,
-  tagOptions,
-  fetchTagOptions,
-  mode,
-  techWatchId,
-  onRemoveFromTechWatch
+                                   onUpdateStatus,
+                                   onAssignNext,
+                                   onDelete,
+                                   mode,
+                                   techWatchId,
+  onRemoveFromTechWatch,
+  onEdited
 }) {
   const [chosenCategory, setChosenCategory] = useState({}) // { [linkId]: tagName | 'Uncategorized' }
   const [draggingLinkId, setDraggingLinkId] = useState(null)
   const [showBottomChooserFor, setShowBottomChooserFor] = useState(null)
+  const [editLink, setEditLink] = useState(null)
 
   const storageKey = techWatchId ? `mvtCategory:${techWatchId}` : null
   // Load saved categories for this TechWatch
@@ -106,9 +103,10 @@ function GroupedByCategoryView({
         draggable
         onDragStart={(e) => onDragStart(e, l)}
         onDragEnd={onDragEnd}
+        onDoubleClick={() => setEditLink(l)}
         className="py-1 rounded cursor-grab flex items-center">
       {isMvt ? null : <span>- </span>}
-      <a href={l.url} target="_blank" rel="noreferrer">{l.title}</a>
+      <a href={l.url} target="_blank" rel="noreferrer" onDoubleClick={(e) => e.stopPropagation()}>{l.title}</a>
       {isMvt ? (
         <>
           {l.description ? <span className="ml-1">: {l.description}</span> : null}
@@ -171,6 +169,10 @@ function GroupedByCategoryView({
           <span>Drag a link here to choose its category from its tags</span>
         )}
       </div>
+
+      {editLink && (
+        <LinkEditModal link={editLink} onRequestClose={() => setEditLink(null)} onSaved={onEdited} />
+      )}
     </div>
   )
 }

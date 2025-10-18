@@ -22,17 +22,14 @@ export default function NextTechWatchPage() {
     }, [])
 
     return (
-        <div>
+        <div className="tw-panel p-3 -mt-3">
             <PageHeader title="Active Tech Watch" error={error} />
-            <section className="border border-gray-300 p-4 mb-4 rounded">
 
-                {activeTechWatch ? (
-                    <TechWatchComponent techWatchId={activeTechWatch.id} date={activeTechWatch.date} />
-                ) : (
-                    <div className="mb-3">No active TechWatch</div>
-                )}
-
-            </section>
+            {activeTechWatch ? (
+                <TechWatchComponent techWatchId={activeTechWatch.id} date={activeTechWatch.date} />
+            ) : (
+                <div className="mb-3">No active TechWatch</div>
+            )}
         </div>
     )
 }

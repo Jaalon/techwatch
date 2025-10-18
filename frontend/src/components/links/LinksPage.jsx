@@ -18,6 +18,7 @@ export default function LinksPage() {
   const [total, setTotal] = useState(0)
   const [sort, setSort] = useState('date')
 
+
   const load = async () => {
     setError('')
     try {
@@ -89,19 +90,27 @@ export default function LinksPage() {
     }
   }
 
-  return (
-    <div>
-      <PageHeader title="Links Database" error={error} />
-        <SearchLinkComponent
-            query={query}
-            setQuery={setQuery}
-            status={status}
-            setStatus={setStatus}
-            sort={sort}
-            setSort={setSort}
-        />
 
-        <AddLinkModal onAdded={() => { setPage(0); load() }} />
+  return (
+    <div className="tw-panel p-3 -mt-3">
+    <PageHeader title="Links Database" error={error} />
+    <div >
+      <div className="flex items-center gap-2 mb-2">
+        <div className="flex-1">
+          <SearchLinkComponent
+              query={query}
+              setQuery={setQuery}
+              status={status}
+              setStatus={setStatus}
+              sort={sort}
+              setSort={setSort}
+          />
+        </div>
+        <div className="ml-auto">
+          <AddLinkModal onAdded={() => { setPage(0); load() }} />
+        </div>
+      </div>
+
 
       <LinkListComponent
         links={links}
@@ -114,7 +123,9 @@ export default function LinksPage() {
         onUpdateStatus={updateStatus}
         onAssignNext={assignToNext}
         onDelete={remove}
+        onEdited={load}
       />
     </div>
-  )
+  </div>
+)
 }

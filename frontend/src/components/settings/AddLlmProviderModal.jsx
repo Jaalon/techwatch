@@ -50,13 +50,13 @@ export default function AddLlmProviderModal({ isOpen, onRequestClose, onSaved })
       draggable={true}
       resizable={true}
       footerContent={
-        <div className="flex justify-end gap-2">
-          <button onClick={onRequestClose} className="px-3 py-2 border rounded">Cancel</button>
-          <button onClick={onSave} disabled={!canSave || saving} className="px-3 py-2 border rounded opacity-100 disabled:opacity-50">
-            {saving ? 'Saving…' : 'Save'}
-          </button>
-        </div>
-      }
+            <div className="flex justify-end gap-2">
+              <button onClick={onRequestClose} className="tw-btn">Cancel</button>
+              <button onClick={onSave} disabled={!canSave || saving} className="tw-btn">
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          }
     >
       {error && <div className="mb-2 text-red-600 text-sm">{error}</div>}
       <div className="grid grid-cols-1 gap-3">

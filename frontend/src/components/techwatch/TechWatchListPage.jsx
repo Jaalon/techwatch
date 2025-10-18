@@ -40,9 +40,8 @@ export default function TechWatchListPage() {
     }
 
     return (
-        <div>
+        <div className="tw-panel p-3 -mt-3">
             <PageHeader title="Tech Watch List" error={error} />
-
 
             <NewTechWatchComponent onCreated={loadTechWatches} />
 
@@ -54,7 +53,7 @@ export default function TechWatchListPage() {
             />
 
             {openedTechWatch && (
-                <section className="border border-gray-300 p-4 mb-4 rounded">
+                <section className="mt-3 tw-searchbar p-2 rounded">
                     <TechWatchComponent techWatchId={openedTechWatch.id} date={openedTechWatch.date} />
                 </section>
             )}

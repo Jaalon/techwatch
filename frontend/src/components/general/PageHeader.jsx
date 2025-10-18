@@ -1,16 +1,13 @@
 import React from 'react'
 
-export default function PageHeader({ title, error, actions, className = '' }) {
+export default function PageHeader({ title, error}) {
   return (
-    <header className={`mb-3 ${className}`}>
-      <div className="flex items-center justify-between gap-2">
+    <header>
+      <div>
         <h2 className="page-subtitle">{title}</h2>
-        {actions && (
-          <div className="flex items-center gap-2">{actions}</div>
-        )}
       </div>
       {error ? (
-        <div className="tw-error mb-2">{error}</div>
+        <div className="tw-error mt-2">{error}</div>
       ) : null}
     </header>
   )

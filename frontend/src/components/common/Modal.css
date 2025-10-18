@@ -21,12 +21,12 @@
   border-top: 1px solid var(--color-border);
 }
 
-/* Body surface: ensure bordered inputs with slightly darker background inside modals */
+/* Body surface: ensure bordered inputs contrasted against panel background inside modals */
 .tw-modal-surface input,
 .tw-modal-surface select,
 .tw-modal-surface textarea {
   border: 1px solid var(--color-input-border);
-  background-color: var(--color-modal-field-bg);
+  background-color: var(--color-input-bg);
   color: var(--color-text);
 }
 .tw-modal-surface input:focus,

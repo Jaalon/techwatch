@@ -3,12 +3,13 @@
 :root {
   /* Base text and surfaces */
   --color-text: #111827; /* gray-900 */
+  --color-text-muted: #4b5563; /* gray-600 */
   --color-surface: #ffffff; /* white */
   --color-surface-hover: #f9fafb; /* gray-50 */
   --color-border: #e5e7eb; /* gray-200 */
 
   /* Inputs */
-  --color-input-bg: #ffffff; /* white */
+  --color-input-bg: #f8fafc; /* slate-50 (swapped) */
   --color-input-border: #d1d5db; /* gray-300 */
   --color-input-focus: #60a5fa; /* blue-400 */
 
@@ -31,20 +32,27 @@
 
   /* Modals */
   --color-backdrop: rgba(0,0,0,0.45);
-  --color-modal-bg: #ffffff;
+  --color-modal-bg: #ffffff; /* white (swapped with input bg) */
   --color-modal-header-bg: #f9fafb; /* gray-50 */
   --color-modal-footer-bg: #f9fafb; /* gray-50 */
   --color-modal-field-bg: #f3f4f6; /* gray-100 */
+
+  /* Tabs */
+  --color-tab-bg: #ffffff; /* white for inactive tabs */
+  --color-tab-active-bg: #f3f4f6; /* gray-100 to match content panel */
+  /* Search bar */
+  --color-searchbar-bg: #e5e7eb; /* gray-200, slightly darker than panel */
 }
 
 /* Dark theme overrides */
 .dark {
   --color-text: #e5e7eb; /* gray-200 */
+  --color-text-muted: #9ca3af; /* gray-400 */
   --color-surface: #0f172a; /* slate-900 */
   --color-surface-hover: #111827; /* gray-900 */
   --color-border: #374151; /* gray-700 */
 
-  --color-input-bg: #111827; /* gray-900 */
+  --color-input-bg: #1f2937; /* gray-800 (swapped) */
   --color-input-border: #374151; /* gray-700 */
   --color-input-focus: #93c5fd; /* blue-300 */
 
@@ -63,10 +71,16 @@
   --color-success-border: #065f46; /* emerald-800 */
 
   --color-backdrop: rgba(0,0,0,0.6);
-  --color-modal-bg: #1f2937; /* gray-800 */
+  --color-modal-bg: #111827; /* gray-900 (swapped with input bg) */
   --color-modal-header-bg: #111827; /* gray-900 */
   --color-modal-footer-bg: #111827; /* gray-900 */
   --color-modal-field-bg: #0f172a; /* slate-900 */
+
+  /* Tabs */
+  --color-tab-bg: #1f2937; /* inactive tabs slightly lighter than panel */
+  --color-tab-active-bg: #0f172a; /* match content panel (tw-panel) */
+  /* Search bar */
+  --color-searchbar-bg: #0b1220; /* slightly darker than panel in dark mode */
 }
 
 /* Default palette reference (for documentation only)
@@ -83,10 +97,39 @@
 .page-container { @apply w-full max-w-[900px] py-8 px-4 text-left mx-auto; }
 .page-title { @apply mb-4 font-bold text-5xl; }
 .page-subtitle { @apply mb-8 font-bold text-xl; }
-.tablist { @apply flex gap-0 mb-4; border-bottom: 1px solid var(--color-border); }
-.content-area { @apply min-h-[200px]; }
+.tablist { @apply flex gap-0 mb-0; border-bottom: 1px solid var(--color-border); padding: 0.5rem 0.75rem; position: relative; z-index: 1; }
+.content-area { @apply min-h-[200px]; position: relative; z-index: 4; }
 
 /* Reusable UI tokens */
+/* App-level header: apply modal header background to the whole header (title + tabs) */
+.app-header {
+  background: var(--color-modal-header-bg);
+}
+
+/* Section/page header matching modal header background */
+.tw-section-header {
+  background: var(--color-modal-header-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem; /* py-2 px-3 */
+}
+/* Tabs */
+.tw-tab {
+  @apply px-3 py-2;
+  background: var(--color-tab-bg);
+  color: var(--color-text-muted);
+  position: relative;
+  z-index: 1; /* Inactive tabs behind content */
+}
+.tw-tab:hover { color: var(--color-text); }
+.tw-tab--active {
+  background: var(--color-tab-active-bg);
+  color: var(--color-text);
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-accent);
+  position: relative;
+  z-index: 1; /* Active tab behind content border to appear embedded */
+}
 .tw-btn {
   @apply inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded disabled:opacity-50 disabled:cursor-not-allowed;
   border: 1px solid var(--color-border);
@@ -126,6 +169,23 @@
 }
 .tw-tag__remove:hover { color: var(--color-accent-hover); }
 
+/* Muted text */
+.tw-text-muted { color: var(--color-text-muted); }
+
+/* Panel surface utility: bordered, soft background */
+.tw-panel {
+  border: 1px solid var(--color-border);
+  background: var(--color-modal-field-bg);
+  border-radius: 0.5rem;
+}
+
+/* Search bar utility */
+.tw-searchbar {
+  border: 1px solid var(--color-border);
+  background: var(--color-searchbar-bg);
+  border-radius: 0.5rem;
+}
+
 /* Errors */
 .tw-error {
   @apply text-sm rounded px-2 py-1;
@@ -133,3 +193,28 @@
   background: var(--color-danger-bg);
   border: 1px solid var(--color-danger-border);
 }
+
+
+/* Global app background uses modal background */
+html, body, #root {
+  background: var(--color-modal-bg);
+  color: var(--color-text);
+  min-height: 100%;
+}
+
+.tw-divide-y > * + * {
+  border-top: 1px solid var(--color-border);
+}
+:root { --color-row-alt-bg: #f9fafb; }
+.dark { --color-row-alt-bg: #0f172a; }
+
+/* List utilities: zebra striping and hover */
+.tw-list > li { transition: background-color 0.12s ease-in-out; }
+.tw-list > li:nth-child(odd) { background: var(--color-row-alt-bg); }
+.tw-list > li:hover { background: var(--color-surface-hover); }
+
+/* Link item status accent */
+.tw-item { border-left: 4px solid transparent; }
+.tw-item--keep { border-left-color: var(--color-success); }
+.tw-item--later { border-left-color: var(--color-accent); }
+.tw-item--reject { border-left-color: var(--color-danger); }

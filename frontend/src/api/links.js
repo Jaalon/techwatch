@@ -78,3 +78,14 @@ export async function updateLinkDescription(id, description) {
   })
   if (!res.ok) throw new Error(await res.text().catch(() => ''))
 }
+
+// Generic update allowing title/url/description/status etc.
+export async function updateLink(id, payload) {
+  const body = payload && typeof payload === 'object' ? payload : {}
+  const res = await fetch(`${BASE}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  })
+  if (!res.ok) throw new Error(await res.text().catch(() => ''))
+}

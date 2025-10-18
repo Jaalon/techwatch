@@ -20,13 +20,22 @@ export default function TechWatchComponent({ techWatchId, date }) {
     load()
   }, [techWatchId])
 
+  const reloadLinks = async () => {
+    if (!techWatchId) { setLinks([]); return }
+    try {
+      const data = await apiGetTechWatchLinks(techWatchId)
+      setLinks(data)
+    } catch (e) {
+      console.error(e)
+      setLinks([])
+    }
+  }
+
   const removeFromTechWatch = async (linkId) => {
     if (!techWatchId) return
     try {
       await apiRemoveLinkFromTechWatch(techWatchId, linkId)
-      // reload
-      const data = await apiGetTechWatchLinks(techWatchId)
-      setLinks(data)
+      await reloadLinks()
     } catch (e) {
       console.error(e)
     }
@@ -75,6 +84,7 @@ export default function TechWatchComponent({ techWatchId, date }) {
             mode="mvt"
             techWatchId={techWatchId}
             onRemoveFromTechWatch={(_, linkId) => removeFromTechWatch(linkId)}
+            onEdited={reloadLinks}
           />
 
           <div className="mt-4">
