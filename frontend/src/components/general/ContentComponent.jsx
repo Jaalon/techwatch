@@ -6,7 +6,7 @@ import SettingsPage from '../settings/SettingsPage'
 
 export default function ContentComponent({ activeTab }) {
   return (
-    <div style={{ minHeight: 200 }}>
+    <div className="content-area">
       {activeTab === 'links' && <LinksPage />}
       {activeTab === 'next' && <NextTechWatchPage />}
       {activeTab === 'techwatchs' && <TechWatchListPage />}

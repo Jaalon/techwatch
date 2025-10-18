@@ -1,3 +1,135 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+/* Centralized color tokens and defaults */
+:root {
+  /* Base text and surfaces */
+  --color-text: #111827; /* gray-900 */
+  --color-surface: #ffffff; /* white */
+  --color-surface-hover: #f9fafb; /* gray-50 */
+  --color-border: #e5e7eb; /* gray-200 */
+
+  /* Inputs */
+  --color-input-bg: #ffffff; /* white */
+  --color-input-border: #d1d5db; /* gray-300 */
+  --color-input-focus: #60a5fa; /* blue-400 */
+
+  /* Accent (primary) */
+  --color-accent: #2563eb; /* blue-600 */
+  --color-accent-hover: #1d4ed8; /* blue-700 */
+  --color-accent-soft: #eff6ff; /* blue-50 */
+  --color-accent-border: #bfdbfe; /* blue-200 */
+  --color-accent-text: #1e40af; /* blue-800 */
+
+  /* Danger */
+  --color-danger: #b91c1c; /* red-700 */
+  --color-danger-bg: #fef2f2; /* red-50 */
+  --color-danger-border: #fecaca; /* red-200 */
+
+  /* Success (reserved) */
+  --color-success: #065f46; /* emerald-800 */
+  --color-success-bg: #ecfdf5; /* emerald-50 */
+  --color-success-border: #a7f3d0; /* emerald-200 */
+
+  /* Modals */
+  --color-backdrop: rgba(0,0,0,0.45);
+  --color-modal-bg: #ffffff;
+  --color-modal-header-bg: #f9fafb; /* gray-50 */
+  --color-modal-footer-bg: #f9fafb; /* gray-50 */
+  --color-modal-field-bg: #f3f4f6; /* gray-100 */
+}
+
+/* Dark theme overrides */
+.dark {
+  --color-text: #e5e7eb; /* gray-200 */
+  --color-surface: #0f172a; /* slate-900 */
+  --color-surface-hover: #111827; /* gray-900 */
+  --color-border: #374151; /* gray-700 */
+
+  --color-input-bg: #111827; /* gray-900 */
+  --color-input-border: #374151; /* gray-700 */
+  --color-input-focus: #93c5fd; /* blue-300 */
+
+  --color-accent: #60a5fa; /* blue-400 */
+  --color-accent-hover: #3b82f6; /* blue-500 */
+  --color-accent-soft: rgba(37,99,235,0.15);
+  --color-accent-border: #1d4ed8; /* blue-700 */
+  --color-accent-text: #93c5fd; /* blue-300 */
+
+  --color-danger: #fca5a5; /* red-300 */
+  --color-danger-bg: rgba(185,28,28,0.15); /* red-700 @ 15% */
+  --color-danger-border: #7f1d1d; /* red-900 */
+
+  --color-success: #34d399; /* emerald-400 */
+  --color-success-bg: rgba(16,185,129,0.15); /* emerald-500 @ 15% */
+  --color-success-border: #065f46; /* emerald-800 */
+
+  --color-backdrop: rgba(0,0,0,0.6);
+  --color-modal-bg: #1f2937; /* gray-800 */
+  --color-modal-header-bg: #111827; /* gray-900 */
+  --color-modal-footer-bg: #111827; /* gray-900 */
+  --color-modal-field-bg: #0f172a; /* slate-900 */
+}
+
+/* Default palette reference (for documentation only)
+- Text: #111827 (light) / #e5e7eb (dark)
+- Surface: #ffffff (light) / #0f172a (dark)
+- Border: #e5e7eb (light) / #374151 (dark)
+- Primary accent: #2563eb → hover #1d4ed8 (light) / #60a5fa → #3b82f6 (dark)
+- Danger: #b91c1c with bg #fef2f2, border #fecaca (light) / softer tones in dark
+- Success: #065f46 with bg #ecfdf5, border #a7f3d0 (light)
+- Modal backdrop: rgba(0,0,0,0.45) (light) / 0.6 (dark)
+*/
+
+.page-shell { @apply min-h-screen flex items-start justify-center; }
+.page-container { @apply w-full max-w-[900px] py-8 px-4 text-left mx-auto; }
+.page-title { @apply mb-4 font-bold text-5xl; }
+.page-subtitle { @apply mb-8 font-bold text-xl; }
+.tablist { @apply flex gap-0 mb-4; border-bottom: 1px solid var(--color-border); }
+.content-area { @apply min-h-[200px]; }
+
+/* Reusable UI tokens */
+.tw-btn {
+  @apply inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded disabled:opacity-50 disabled:cursor-not-allowed;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.tw-btn:hover { background: var(--color-surface-hover); }
+.tw-btn--sm { @apply h-7 px-2 text-xs; }
+.tw-btn--md { @apply h-8; }
+.tw-btn--danger {
+  border-color: var(--color-danger-border);
+  color: var(--color-danger);
+  background: var(--color-surface);
+}
+.tw-btn--danger:hover { background: var(--color-danger-bg); }
+
+.tw-input, .tw-select, .tw-textarea {
+  @apply rounded px-2 py-1;
+  border: 1px solid var(--color-input-border);
+  background: var(--color-input-bg);
+  color: var(--color-text);
+}
+.tw-input:focus, .tw-select:focus, .tw-textarea:focus {
+  outline: none;
+  border-color: var(--color-input-focus);
+}
+
+.tw-tag {
+  @apply rounded-full px-2 py-0.5 inline-flex items-center gap-1;
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent-border);
+  color: var(--color-accent-text);
+}
+.tw-tag__remove {
+  @apply ml-1;
+  color: var(--color-accent);
+}
+.tw-tag__remove:hover { color: var(--color-accent-hover); }
+
+/* Errors */
+.tw-error {
+  @apply text-sm rounded px-2 py-1;
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+}

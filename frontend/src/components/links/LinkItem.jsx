@@ -199,7 +199,7 @@ function LinkItem({
             title="Edit"
             aria-label="Edit"
             onClick={openModal}
-            className="inline-flex items-center justify-center h-6 px-2 text-xs font-medium rounded border border-gray-300 hover:bg-gray-100"
+            className="tw-btn tw-btn--sm"
           >
             Edit
           </button>
@@ -218,9 +218,9 @@ function LinkItem({
       <div className="my-1">
         <div className="flex gap-2 flex-wrap items-center">
           {(l.tags || []).map(t => (
-            <span key={t.id || t.name} className="bg-indigo-50 border border-indigo-300 rounded-full px-2 py-0.5 inline-flex items-center gap-1">
+            <span key={t.id || t.name} className="tw-tag">
               <span>{t.name}</span>
-              <button title="Remove tag" onClick={() => onRemoveTag(l.id, t.name)} className="ml-1 text-indigo-600 hover:text-indigo-800">&times;</button>
+              <button title="Remove tag" onClick={() => onRemoveTag(l.id, t.name)} className="tw-tag__remove">&times;</button>
             </span>
           ))}
           <div className="inline-flex gap-1 items-center">
@@ -230,24 +230,24 @@ function LinkItem({
               value={tagInputs[l.id] || ''}
               onChange={async e => { const v = e.target.value; setTagInputs(prev => ({ ...prev, [l.id]: v })); await fetchTagOptions(l.id, v) }}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onAddTag(l.id, (tagInputs[l.id] || '').trim()) } }}
-              className="min-w-[10rem]"
+              className="tw-input min-w-[10rem]"
             />
             <datalist id={`tag-options-${l.id}`}>
               {(tagOptions[l.id] || []).map(opt => (
                 <option key={opt.id} value={opt.name} />
               ))}
             </datalist>
-            <button onClick={() => onAddTag(l.id, (tagInputs[l.id] || '').trim())}>Add</button>
+            <button className="tw-btn tw-btn--sm" onClick={() => onAddTag(l.id, (tagInputs[l.id] || '').trim())}>Add</button>
           </div>
         </div>
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <button onClick={() => onUpdateStatus(l.id, 'KEEP')}>Keep</button>
-        <button onClick={() => onUpdateStatus(l.id, 'LATER')}>Later</button>
-        <button onClick={() => onUpdateStatus(l.id, 'REJECT')}>Reject</button>
-        <button onClick={() => onAssignNext(l.id)}>Add to next TechWatch</button>
-        <button onClick={() => onDelete(l.id)} className="ml-auto">Delete</button>
+        <button className="tw-btn tw-btn--sm" onClick={() => onUpdateStatus(l.id, 'KEEP')}>Keep</button>
+        <button className="tw-btn tw-btn--sm" onClick={() => onUpdateStatus(l.id, 'LATER')}>Later</button>
+        <button className="tw-btn tw-btn--sm" onClick={() => onUpdateStatus(l.id, 'REJECT')}>Reject</button>
+        <button className="tw-btn tw-btn--sm" onClick={() => onAssignNext(l.id)}>Add to next TechWatch</button>
+        <button className="tw-btn tw-btn--sm tw-btn--danger ml-auto" onClick={() => onDelete(l.id)}>Delete</button>
       </div>
 
       {showMagic && (

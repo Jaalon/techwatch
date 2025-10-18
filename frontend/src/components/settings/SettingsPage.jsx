@@ -5,7 +5,7 @@ import PromptDirectivesComponent from './PromptDirectivesComponent'
 export default function SettingsPage() {
   return (
     <div>
-      <h2 className="mt-0">Settings</h2>
+      <h2 className="page-subtitle">Settings</h2>
       <IAProviderSettingsComponent />
       <PromptDirectivesComponent />
     </div>

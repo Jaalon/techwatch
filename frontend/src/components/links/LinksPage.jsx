@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { listLinks, deleteLink as apiDeleteLink, updateLinkStatus as apiUpdateLinkStatus, assignToNext as apiAssignToNext, addTag as apiAddTag, removeTag as apiRemoveTag, searchTags as apiSearchTags } from '../../api/links'
-import AddLinkComponent from './AddLinkComponent'
+import AddLinkModal from './AddLinkModal.jsx'
 import SearchLinkComponent from './SearchLinkComponent'
 import LinkListComponent from './LinkListComponent'
+import PageHeader from '../general/PageHeader.jsx'
 
 export default function LinksPage() {
   const [links, setLinks] = useState([])
@@ -90,19 +91,17 @@ export default function LinksPage() {
 
   return (
     <div>
-      <h2 className="mt-0">Links Database</h2>
-      {error && <div className="error mb-2">{error}</div>}
+      <PageHeader title="Links Database" error={error} />
+        <SearchLinkComponent
+            query={query}
+            setQuery={setQuery}
+            status={status}
+            setStatus={setStatus}
+            sort={sort}
+            setSort={setSort}
+        />
 
-      <AddLinkComponent onAdded={() => { setPage(0); load() }} />
-
-      <SearchLinkComponent
-        query={query}
-        setQuery={setQuery}
-        status={status}
-        setStatus={setStatus}
-        sort={sort}
-        setSort={setSort}
-      />
+        <AddLinkModal onAdded={() => { setPage(0); load() }} />
 
       <LinkListComponent
         links={links}

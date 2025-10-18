@@ -1,7 +1,35 @@
 import React from 'react'
-import LinkList from './LinkList'
+import LinkItem from './LinkItem'
 
-// Thin wrapper to align with requested naming while reusing existing LinkList component
-export default function LinkListComponent(props) {
-  return <LinkList {...props} />
+export default function LinkListComponent({
+  links,
+  tagInputs,
+  setTagInputs,
+  tagOptions,
+  fetchTagOptions,
+  onRemoveTag,
+  onAddTag,
+  onUpdateStatus,
+  onAssignNext,
+  onDelete
+}) {
+  return (
+    <ul className="list-none p-0 space-y-2">
+      {(links || []).map(l => (
+        <LinkItem
+          key={l.id}
+          link={l}
+          tagInputs={tagInputs}
+          setTagInputs={setTagInputs}
+          tagOptions={tagOptions}
+          fetchTagOptions={fetchTagOptions}
+          onRemoveTag={onRemoveTag}
+          onAddTag={onAddTag}
+          onUpdateStatus={onUpdateStatus}
+          onAssignNext={onAssignNext}
+          onDelete={onDelete}
+        />
+      ))}
+    </ul>
+  )
 }

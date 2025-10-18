@@ -1,0 +1,37 @@
+/* Centralized Modal styles (based on AddLlmProviderModal) */
+
+/* Backdrop */
+.tw-modal-backdrop { background-color: var(--color-backdrop); }
+
+/* Window container */
+.tw-modal-window {
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+  background: var(--color-modal-bg);
+  color: var(--color-text);
+}
+
+/* Header */
+.tw-modal-header { background: var(--color-modal-header-bg); }
+
+/* Footer */
+.tw-modal-footer {
+  background: var(--color-modal-footer-bg);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Body surface: ensure bordered inputs with slightly darker background inside modals */
+.tw-modal-surface input,
+.tw-modal-surface select,
+.tw-modal-surface textarea {
+  border: 1px solid var(--color-input-border);
+  background-color: var(--color-modal-field-bg);
+  color: var(--color-text);
+}
+.tw-modal-surface input:focus,
+.tw-modal-surface select:focus,
+.tw-modal-surface textarea:focus {
+  outline: none;
+  border-color: var(--color-input-focus);
+}

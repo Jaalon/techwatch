@@ -1,28 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { listConfigs as apiListConfigs, createConfig as apiCreateConfig, setDefaultConfig as apiSetDefaultConfig } from '../../api/llm'
+import { listConfigs as apiListConfigs, setDefaultConfig as apiSetDefaultConfig } from '../../api/llm'
+import AddLlmProviderModal from './AddLlmProviderModal.jsx'
 
 export default function IAProviderSettingsComponent() {
   const [isOpen, setIsOpen] = useState(false)
   const [showModal, setShowModal] = useState(false)
 
-  const [name, setName] = useState('')
-  const [baseUrl, setBaseUrl] = useState('')
-  const [apiKey, setApiKey] = useState('')
-  const [models] = useState(['sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'])
-  const [selectedModel, setSelectedModel] = useState('')
-  const [saving, setSaving] = useState(false)
   const [configs, setConfigs] = useState([])
-  const [error, setError] = useState('')
-  const [provider, setProvider] = useState('perplexity')
 
-  const resetForm = () => {
-    setName('')
-    setBaseUrl('')
-    setApiKey('')
-    setSelectedModel('')
-    setSaving(false)
-    setError('')
-  }
+  const resetForm = () => {}
 
   const loadConfigs = async () => {
     try {
@@ -38,23 +24,6 @@ export default function IAProviderSettingsComponent() {
 
   const openModal = () => { resetForm(); setShowModal(true) }
   const closeModal = () => { setShowModal(false) }
-
-  const canSave = provider === 'perplexity' && selectedModel && name && baseUrl && apiKey
-
-  const onSave = async () => {
-    if (!canSave) return
-    setSaving(true)
-    setError('')
-    try {
-      await apiCreateConfig({ name, baseUrl, apiKey, model: selectedModel })
-      setShowModal(false)
-      await loadConfigs()
-    } catch (e) {
-      setError(e?.message || 'Save failed')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   const setDefault = async (id) => {
     try {
@@ -90,8 +59,9 @@ export default function IAProviderSettingsComponent() {
           aria-label="IA API Configuration"
           className="p-[12px] px-[14px] bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
         >
+          <p className="mt-0">Gérez les configurations LLM.</p>
+
           <div className="flex justify-between items-center mb-2">
-            <p className="mt-0">Gérez les configurations LLM.</p>
             <button onClick={openModal} className="px-3 py-1 border rounded">Add LLM</button>
           </div>
 
@@ -119,54 +89,11 @@ export default function IAProviderSettingsComponent() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded shadow-lg w-full max-w-[520px] p-4">
-            <h3 className="mt-0 mb-3">Add LLM configuration</h3>
-            {error && <div className="mb-2 text-red-600 text-sm">{error}</div>}
-            <div className="grid grid-cols-1 gap-3">
-              <div>
-                <label className="block text-sm mb-1">Type</label>
-                <select value={provider} onChange={e => setProvider(e.target.value)} className="w-full">
-                  <option value="docker">docker</option>
-                  <option value="self-managed">self-managed</option>
-                  <option value="openAI">openAI</option>
-                  <option value="perplexity">perplexity</option>
-                </select>
-              </div>
-              {provider === 'perplexity' ? (
-                <>
-                  <div>
-                    <label className="block text-sm mb-1">Nom</label>
-                    <input value={name} onChange={e => setName(e.target.value)} className="w-full" />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-1">Base URL</label>
-                    <input value={baseUrl} onChange={e => setBaseUrl(e.target.value)} className="w-full" />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-1">API Key</label>
-                    <input value={apiKey} onChange={e => setApiKey(e.target.value)} className="w-full" />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-1">Model</label>
-                    <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} className="w-full">
-                      <option value="">-- Select a model --</option>
-                      {models.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  </div>
-                </>
-              ) : (
-                <div className="text-sm text-gray-600 dark:text-gray-400">Not yet implemented</div>
-              )}
-            </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <button onClick={closeModal} className="px-3 py-2 border rounded">Cancel</button>
-              <button onClick={onSave} disabled={!canSave || saving} className="px-3 py-2 border rounded opacity-100 disabled:opacity-50">
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <AddLlmProviderModal
+          isOpen={showModal}
+          onRequestClose={closeModal}
+          onSaved={loadConfigs}
+        />
       )}
     </section>
   )

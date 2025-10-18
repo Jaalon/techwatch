@@ -185,28 +185,28 @@ export default function LinkEditModal({ link, onRequestClose }) {
   return createPortal(
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
       {/* Opaque backdrop */}
-      <div className="absolute inset-0 bg-black" onClick={closeModal} />
+      <div className="absolute inset-0 tw-modal-backdrop" onClick={closeModal} />
 
       {/* Draggable & Resizable window */}
       <div
-        className="fixed bg-white rounded shadow-lg border border-gray-200 relative flex flex-col"
+        className="fixed relative flex flex-col tw-modal-window"
         style={{ top: modalPos.y, left: modalPos.x, width: modalSize.w, height: modalSize.h }}
       >
         {/* Header bar (drag handle) */}
         <div
           onMouseDown={onHeaderMouseDown}
-          className="cursor-move select-none bg-gray-100 px-3 py-2 flex items-center justify-between gap-2"
+          className="cursor-move select-none px-3 py-2 flex items-center justify-between gap-2 tw-modal-header"
         >
           <h3 className="text-base font-semibold truncate" title={l.title}>{l.title}</h3>
           <button aria-label="Close" onClick={closeModal} className="text-xl leading-none px-2">&times;</button>
         </div>
 
         {/* Body */}
-        <div className="p-3 space-y-3 overflow-hidden flex flex-col h-full">
+        <div className="p-3 space-y-3 overflow-hidden flex flex-col h-full tw-modal-surface">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
             <textarea
-              className="w-full border rounded p-2 text-sm"
+              className="tw-textarea w-full p-2 text-sm"
               rows={4}
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
@@ -214,7 +214,7 @@ export default function LinkEditModal({ link, onRequestClose }) {
           </div>
 
           <div className="flex">
-            <button type="button" onClick={onSummarize} className="ml-auto mr-auto inline-flex items-center justify-center h-8 px-3 text-sm font-medium rounded border border-gray-300 bg-white hover:bg-gray-100">IA summarize</button>
+            <button type="button" onClick={onSummarize} className="tw-btn">IA summarize</button>
           </div>
 
           <div className="flex-1 min-h-0">
