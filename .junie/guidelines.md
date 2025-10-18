@@ -1,56 +1,90 @@
-# TechWatch – Project Guidelines for Junie
+# TechWatch – Internal Development Guidelines (Junie Notes)
 
-These guidelines tell Junie how to work within this repository: what the project is, how it’s structured, how to run/build/test it on Windows, and when to verify changes.
+These notes are intended for experienced developers working on this repository. They capture project-specific build, configuration, and testing practices validated in the current Windows environment.
 
-## Project overview
-TechWatch is a local-first application that manages the full lifecycle of a Tech Watch:
-- Collect links (manually or via the browser extension)
-- Sort and categorize relevant items
-- Summarize content with LLMs (local or cloud)
-- Generate export-ready outputs (e.g., Confluence-ready text)
-- Archive completed Tech Watches
+Repository overview (key dirs):
+- backend – Quarkus (Java 21), Gradle (Kotlin DSL)
+- frontend – React + Vite
+- browser-extension – Chrome MV3
+- docs – Documentation
 
-Key points:
-- Runs entirely locally
-- SQLite for persistence
-- ChromaDB for semantic search
-- Backend: Quarkus (Java 21)
-- Frontend: React + Vite
-- Browser extension: Manifest V3
+1) Backend (Quarkus, Java 21)
 
-## Repository structure
-- backend/ – REST API (Quarkus + Java 21), Gradle (Kotlin DSL)
-- frontend/ – React UI (Vite)
-- browser-extension/ – Chrome/Opera extension (Manifest V3)
-- docs/ – Project documentation
-- README.adoc – Full project readme with detailed instructions
-
-## Development prerequisites
-- Java 21 (JDK)
-- Node.js 18+ with npm
-- Git
-- Windows PowerShell (paths and commands below assume Windows)
-
-## How Junie should run and test
-Always prefer minimal, targeted edits and verify with the smallest relevant set of tests/build steps.
-
-### Backend (Quarkus)
+Dev/run/build
 - Dev mode: from project root
   - cd backend
   - .\gradlew.bat quarkusDev
-  - Service runs at http://localhost:8080
-- Run all tests:
-  - cd backend
-  - .\gradlew.bat test
-- Run one test class:
-  - cd backend
-  - .\gradlew.bat test --tests "org.jaalon.*YourTestClass*"
-- Build (fat JAR):
+  - Service available at http://localhost:8080
+- Build (JAR):
   - cd backend
   - .\gradlew.bat build
 
-### Frontend (React + Vite)
-- Start dev server:
+Runtime configuration (application.yaml highlights)
+- Port: quarkus.http.port: 8080
+- CORS: enabled=true; origins="*" (frontend/dev and browser extension calls are allowed)
+- OpenAPI: quarkus.smallrye-openapi.path: /openapi; UI alias at /swagger if the SmallRye OpenAPI UI is enabled
+- DB: H2 file database at jdbc:h2:file:./var/techwatch (username sa, empty password)
+  - Liquibase migrates at start: db/changelog/db.changelog-master.yaml
+  - If schema issues occur locally, you can stop the app and remove the local DB file under var/techwatch, then restart to re-apply migrations
+- Logging: default INFO; org.hibernate.SQL also INFO (SQL visible during tests/dev)
+
+Notes
+- No external DB services required to run tests; H2 file DB is used.
+- Native build hints for org.h2.Driver exist; not relevant for standard local dev.
+
+2) Backend – Testing
+
+Test framework and scope
+- JUnit 5 with Quarkus test support (some tests boot Quarkus; others are plain unit tests).
+- Use Windows-friendly commands (.\gradlew.bat); run the smallest relevant set.
+
+Run tests
+- All tests:
+  - cd backend
+  - .\gradlew.bat test
+- One test class (pattern supported by Gradle):
+  - cd backend
+  - .\gradlew.bat test --tests "org.jaalon.*YourTestClass*"
+- One exact class:
+  - cd backend
+  - .\gradlew.bat test --tests "org.jaalon.smoke.QuickSanityTest"
+- One test method:
+  - cd backend
+  - .\gradlew.bat test --tests "org.jaalon.SomeClass.someMethod"
+
+Add a new plain JUnit test (fast, no Quarkus boot)
+- Create file: backend/src/test/java/org/jaalon/smoke/QuickSanityTest.java
+- Example content (validated locally):
+
+  package org.jaalon.smoke;
+
+  import org.junit.jupiter.api.Test;
+  import static org.junit.jupiter.api.Assertions.assertTrue;
+
+  public class QuickSanityTest {
+      @Test
+      void sanity() {
+          assertTrue(true, "Sanity check should pass");
+      }
+  }
+
+- Run only this test:
+  - cd backend
+  - .\gradlew.bat test --tests "org.jaalon.smoke.QuickSanityTest"
+
+Quarkus tests (if you need full context)
+- Use @QuarkusTest on the class; be aware these tests boot Quarkus and use the H2 DB with Liquibase migrations.
+
+Troubleshooting
+- Clean build cache: .\gradlew.bat clean
+- Stale DB state: stop app/tests and delete var/techwatch files; rerun to re-migrate.
+- Port conflicts: change quarkus.http.port in application.yaml when necessary.
+- CI on Windows: always invoke gradlew.bat.
+
+3) Frontend (React + Vite)
+
+Dev and build
+- Dev server:
   - cd frontend
   - npm ci
   - npm run dev  (http://localhost:5173)
@@ -58,39 +92,31 @@ Always prefer minimal, targeted edits and verify with the smallest relevant set 
   - cd frontend
   - npm ci
   - npm run build
-- Tests: none are enforced at the moment; if present in the future, run via `npm test`.
 
-### Browser extension
-- Build (if package scripts are present):
+Testing
+- No enforced frontend tests at the moment. If you add tests later, prefer the default Vite/ESBuild/Jest/Vitest setup; document commands in package.json.
+
+4) Browser Extension (Manifest V3)
+
+Build
+- If scripts exist:
   - cd browser-extension
   - npm ci
   - npm run build
 
-## When Junie should run tests/build
-- If you change backend Java/Kotlin code or resources → run backend unit/integration tests.
-- If you change build logic or dependencies → run the appropriate build (`gradlew.bat build`).
-- If you change frontend logic → at minimum ensure `npm run build` succeeds; run `npm run dev` locally if runtime behavior is affected.
-- If your change only adds markdown/docs (like this guidelines file) → tests/build are not required.
+5) Additional Development/Debugging Notes
 
-## Conventions and code style
-- Java (backend):
-  - Keep to standard Quarkus/Jakarta idioms.
-  - Format code consistently; avoid unused imports and warnings.
-  - Prefer constructor or field injection patterns already used in the codebase.
-- TypeScript/JavaScript (frontend/extension):
-  - Keep code simple and consistent; prefer functional React components.
-  - Use existing tooling defaults (Vite/ESBuild). If a formatter is configured, follow it.
-- Commits/changes:
-  - Make the minimal change set needed to satisfy the issue.
-  - Do not rename/move code unless the task requires it.
-  - Avoid introducing new dependencies unless necessary.
+- API exploration: use /openapi for the OpenAPI document; Swagger UI may be available at /swagger depending on SmallRye configuration.
+- CORS is permissive for local dev; when hardening for prod, review quarkus.http.cors settings.
+- SQL visibility: org.hibernate.SQL logging is INFO; leverage logs to debug queries in tests.
+- Data location: local H2 DB persists under var/techwatch relative to backend; safe to delete locally between runs.
+- Code style:
+  - Backend Java: follow Quarkus/Jakarta patterns present in the codebase; keep imports clean and avoid unused code.
+  - Frontend: functional React components; keep to Vite defaults and existing file conventions.
+- Minimal changes: prefer targeted edits and focused test runs to keep feedback loop fast on Windows.
 
-## Notes for this environment
-- Paths use Windows backslashes (\) and Gradle must be run with `gradlew.bat`.
-- Prefer specialized tools in this workspace when searching or editing files.
+6) Verified Example (created and removed during this update)
 
-## Quick references
-- Backend tests directory: backend/src/test/java
-- Backend main code: backend/src/main/java
-- Frontend app entry: frontend/src/App.jsx
-- Readme: README.adoc for full architecture and instructions
+- A minimal JUnit test (QuickSanityTest) under backend/src/test/java/org/jaalon/smoke was created, executed successfully via Gradle on Windows, and then removed to keep the repository clean. The code snippet above is the exact content used.
+
+Last verified on: 2025-10-18 (Windows, PowerShell)
