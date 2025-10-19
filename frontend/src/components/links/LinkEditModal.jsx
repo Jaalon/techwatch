@@ -4,6 +4,7 @@ import { updateLink as apiUpdateLink, deleteLink as apiDeleteLink, assignToNext 
 import { summarizeLink } from '../../api/ai'
 import TagRow from './TagRow'
 import LinkEditFooter from './LinkEditFooter'
+import LinkContentModal from './LinkContentModal'
 
 export default function LinkEditModal({ link, onRequestClose, onSaved }) {
     const l = link
@@ -26,6 +27,8 @@ export default function LinkEditModal({ link, onRequestClose, onSaved }) {
     const [assignedNext, setAssignedNext] = React.useState(false)
     const [summarizeLoading, setSummarizeLoading] = React.useState(false)
     const [summarizeError, setSummarizeError] = React.useState('')
+
+    const [showContent, setShowContent] = React.useState(false)
 
     // Ref to the inner fields box (the bordered container) to keep it scrollbar-free
     const fieldsBoxRef = React.useRef(null)
@@ -281,120 +284,152 @@ export default function LinkEditModal({ link, onRequestClose, onSaved }) {
         }
     }
 
-    return createPortal(
-        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
-            {/* Opaque backdrop */}
-            <div className="absolute inset-0 tw-modal-backdrop" onClick={closeModal} />
+    return (
+        <>
+            {createPortal(
+                <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
+                    {/* Opaque backdrop */}
+                    <div className="absolute inset-0 tw-modal-backdrop" onClick={closeModal} />
 
-            {/* Draggable & Resizable window */}
-            <div
-                className="relative flex flex-col tw-modal-window"
-                style={{ top: modalPos.y, left: modalPos.x, width: modalSize.w, height: modalSize.h }}
-            >
-                {/* Header bar (drag handle) */}
-                <div
-                    onMouseDown={onHeaderMouseDown}
-                    className="cursor-move select-none px-3 py-2 flex items-center justify-between gap-2 tw-modal-header"
-                >
-                    <h3 className="text-base font-semibold truncate" title={l.title}>{l.title}</h3>
-                    <button aria-label="Close" onClick={closeModal} className="tw-btn tw-btn--sm">&times;</button>
-                </div>
+                    {/* Draggable & Resizable window */}
+                    <div
+                        className="relative flex flex-col tw-modal-window"
+                        style={{ top: modalPos.y, left: modalPos.x, width: modalSize.w, height: modalSize.h }}
+                    >
+                        {/* Header bar (drag handle) */}
+                        <div
+                            onMouseDown={onHeaderMouseDown}
+                            className="cursor-move select-none px-3 py-2 flex items-center justify-between gap-2 tw-modal-header"
+                        >
+                            <h3 className="text-base font-semibold truncate" title={l.title}>{l.title}</h3>
+                            <button aria-label="Close" onClick={closeModal} className="tw-btn tw-btn--sm">&times;</button>
+                        </div>
 
-                {/* Body */}
-                <div className="p-3 overflow-hidden flex-1 min-h-0 flex flex-col tw-modal-surface">
-                    <div className="flex-1 min-h-0 overflow-auto tw-panel p-3" ref={fieldsBoxRef}>
-                        <div className="mb-3">
-                            <div className="flex items-center justify-between mb-1">
-                                <label className="block text-xs font-medium tw-text-muted">Title</label>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={onAssignNextClick}
-                                        disabled={assigningNext || assignedNext}
-                                        className="tw-btn tw-btn--sm"
-                                        title="Add to next…"
-                                    >
-                                        {assignedNext ? 'In' : (assigningNext ? 'Add…' : 'Add to next TechWatch')}
-                                    </button>
-                                    <select
-                                        className="tw-input"
-                                        value={status}
-                                        onChange={(e) => setStatus(e.target.value)}
-                                        title="Status"
-                                    >
-                                        <option value="KEEP">Keep</option>
-                                        <option value="LATER">Later</option>
-                                        <option value="REJECT">Reject</option>
-                                    </select>
+                        {/* Body */}
+                        <div className="p-3 overflow-hidden flex-1 min-h-0 flex flex-col tw-modal-surface">
+                            <div className="flex-1 min-h-0 overflow-auto tw-panel p-3" ref={fieldsBoxRef}>
+                                <div className="mb-3">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="block text-xs font-medium tw-text-muted">Title</label>
+                                        <div className="flex items-center gap-2">
+                                            {/* Read button shown when there is an AI summary and content exists */}
+                                            {Boolean(apiText && l?.content && (l.content + '').trim().length > 0) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowContent(true)}
+                                                    className="tw-btn tw-btn--sm"
+                                                    title="Read content"
+                                                >
+                                                    Read
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={onAssignNextClick}
+                                                disabled={assigningNext || assignedNext}
+                                                className="tw-btn tw-btn--sm"
+                                                title="Add to next…"
+                                            >
+                                                {assignedNext ? 'In' : (assigningNext ? 'Add…' : 'Add to next TechWatch')}
+                                            </button>
+                                            <select
+                                                className="tw-input"
+                                                value={status}
+                                                onChange={(e) => setStatus(e.target.value)}
+                                                title="Status"
+                                            >
+                                                <option value="KEEP">Keep</option>
+                                                <option value="LATER">Later</option>
+                                                <option value="REJECT">Reject</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <input
+                                        className="tw-input w-full"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                    />
                                 </div>
+                                <div className="mb-3">
+                                    <label className="block text-xs font-medium tw-text-muted mb-1">URL</label>
+                                    <input
+                                        className="tw-input w-full"
+                                        value={url}
+                                        onChange={(e) => setUrl(e.target.value)}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="block text-xs font-medium tw-text-muted mb-1">Description</label>
+                                    <textarea
+                                        className="tw-textarea w-full p-2 text-sm"
+                                        rows={3}
+                                        value={desc}
+                                        onChange={(e) => setDesc(e.target.value)}
+                                    />
+                                </div>
+
+                                {/* IA summarize: show either the button or the summary */}
+                                {apiText ? (
+                                    <div className="mb-2">
+                                        <label className="block text-xs font-medium tw-text-muted mb-1">Texte IA (résultat API)</label>
+                                        <textarea
+                                            className="tw-textarea w-full p-2 text-sm"
+                                            rows={3}
+                                            readOnly
+                                            value={apiText}
+                                        />
+                                    </div>
+                                ) : (
+                                    Boolean(l?.content && (l.content + '').trim().length > 0) && (
+                                        <div className="flex items-center gap-2">
+                                            <button type="button" onClick={onSummarize} className="tw-btn" disabled={summarizeLoading}>IA summarize</button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowContent(true)}
+                                                className="tw-btn"
+                                                title="Read content"
+                                            >
+                                                Read
+                                            </button>
+                                            {summarizeLoading && <span className="text-sm tw-text-muted">Summarize in progress…</span>}
+                                            {!summarizeLoading && summarizeError && <span className="tw-error">{summarizeError}</span>}
+                                        </div>
+                                    )
+                                )}
                             </div>
-                            <input
-                                className="tw-input w-full"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="block text-xs font-medium tw-text-muted mb-1">URL</label>
-                            <input
-                                className="tw-input w-full"
-                                value={url}
-                                onChange={(e) => setUrl(e.target.value)}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <label className="block text-xs font-medium tw-text-muted mb-1">Description</label>
-                            <textarea
-                                className="tw-textarea w-full p-2 text-sm"
-                                rows={3}
-                                value={desc}
-                                onChange={(e) => setDesc(e.target.value)}
-                            />
                         </div>
 
-                        {/* IA summarize: show either the button or the summary */}
-                        {apiText ? (
-                            <div className="mb-2">
-                                <label className="block text-xs font-medium tw-text-muted mb-1">Texte IA (résultat API)</label>
-                                <textarea
-                                    className="tw-textarea w-full p-2 text-sm"
-                                    rows={3}
-                                    readOnly
-                                    value={apiText}
-                                />
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-2">
-                                <button type="button" onClick={onSummarize} className="tw-btn" disabled={summarizeLoading}>IA summarize</button>
-                                {summarizeLoading && <span className="text-sm tw-text-muted">Summarize in progress…</span>}
-                                {!summarizeLoading && summarizeError && <span className="tw-error">{summarizeError}</span>}
-                            </div>
-                        )}
+                        <TagRow linkId={l.id} initialTags={l.tags} className="px-3 py-2" />
+
+                        {/* Footer */}
+                        <LinkEditFooter
+                            onDelete={async () => { try { await apiDeleteLink(l.id) } catch (e) { console.error(e) } finally { onRequestClose?.() } }}
+                            onCancel={() => onRequestClose?.()}
+                            onSave={saveAndClose}
+                        />
+
+                        {/* Resize handles */}
+                        {/* Corners */}
+                        <div onMouseDown={onResizeMouseDown('nw')} className="absolute -top-1 -left-1 w-3 h-3 cursor-nw-resize z-10" />
+                        <div onMouseDown={onResizeMouseDown('ne')} className="absolute -top-1 -right-1 w-3 h-3 cursor-ne-resize z-10" />
+                        <div onMouseDown={onResizeMouseDown('sw')} className="absolute -bottom-1 -left-1 w-3 h-3 cursor-sw-resize z-10" />
+                        <div onMouseDown={onResizeMouseDown('se')} className="absolute -bottom-1 -right-1 w-3 h-3 cursor-se-resize z-10" />
+                        {/* Edges */}
+                        <div onMouseDown={onResizeMouseDown('n')} className="absolute -top-1 left-2 right-2 h-2 cursor-n-resize z-10" />
+                        <div onMouseDown={onResizeMouseDown('s')} className="absolute -bottom-1 left-2 right-2 h-2 cursor-s-resize z-10" />
+                        <div onMouseDown={onResizeMouseDown('w')} className="absolute top-2 bottom-2 -left-1 w-2 cursor-w-resize z-10" />
+                        <div onMouseDown={onResizeMouseDown('e')} className="absolute top-2 bottom-2 -right-1 w-2 cursor-e-resize z-10" />
                     </div>
-                </div>
-
-                <TagRow linkId={l.id} initialTags={l.tags} className="px-3 py-2" />
-
-                {/* Footer */}
-                <LinkEditFooter
-                    onDelete={async () => { try { await apiDeleteLink(l.id) } catch (e) { console.error(e) } finally { onRequestClose?.() } }}
-                    onCancel={() => onRequestClose?.()}
-                    onSave={saveAndClose}
+                </div>,
+                document.body
+            )}
+            {showContent && (
+                <LinkContentModal
+                    title={l?.title}
+                    content={l?.content || ''}
+                    onRequestClose={() => setShowContent(false)}
                 />
-
-                {/* Resize handles */}
-                {/* Corners */}
-                <div onMouseDown={onResizeMouseDown('nw')} className="absolute -top-1 -left-1 w-3 h-3 cursor-nw-resize z-10" />
-                <div onMouseDown={onResizeMouseDown('ne')} className="absolute -top-1 -right-1 w-3 h-3 cursor-ne-resize z-10" />
-                <div onMouseDown={onResizeMouseDown('sw')} className="absolute -bottom-1 -left-1 w-3 h-3 cursor-sw-resize z-10" />
-                <div onMouseDown={onResizeMouseDown('se')} className="absolute -bottom-1 -right-1 w-3 h-3 cursor-se-resize z-10" />
-                {/* Edges */}
-                <div onMouseDown={onResizeMouseDown('n')} className="absolute -top-1 left-2 right-2 h-2 cursor-n-resize z-10" />
-                <div onMouseDown={onResizeMouseDown('s')} className="absolute -bottom-1 left-2 right-2 h-2 cursor-s-resize z-10" />
-                <div onMouseDown={onResizeMouseDown('w')} className="absolute top-2 bottom-2 -left-1 w-2 cursor-w-resize z-10" />
-                <div onMouseDown={onResizeMouseDown('e')} className="absolute top-2 bottom-2 -right-1 w-2 cursor-e-resize z-10" />
-            </div>
-        </div>,
-        document.body
+            )}
+        </>
     )
 }

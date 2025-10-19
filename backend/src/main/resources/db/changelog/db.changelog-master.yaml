@@ -309,3 +309,26 @@ databaseChangeLog:
               - column:
                   name: summary
                   type: VARCHAR(8000)
+
+  - changeSet:
+      id: 9-add-content-to-link
+      author: junie
+      changes:
+        - addColumn:
+            tableName: link
+            columns:
+              - column:
+                  name: content
+                  type: CLOB
+
+  - changeSet:
+      id: 10-add-updatedAt-to-link
+      author: junie
+      changes:
+        - addColumn:
+            tableName: link
+            columns:
+              - column:
+                  name: updatedAt
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP

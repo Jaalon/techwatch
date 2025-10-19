@@ -1,6 +1,7 @@
 package org.jaalon.links;
 
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.logging.Log;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import jakarta.inject.Inject;
@@ -11,6 +12,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jaalon.links.dto.LinkCreateDTO;
 import org.jaalon.links.dto.LinkUpdateDTO;
+import org.jaalon.links.dto.LinkUpsertContentDTO;
 import org.jaalon.tags.Tag;
 import org.jaalon.tags.TagRepository;
 
@@ -23,7 +25,6 @@ import java.util.Optional;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class LinkResource {
-
     @Inject
     LinkRepository repository;
 
@@ -100,6 +101,9 @@ public class LinkResource {
     @POST
     @Transactional
     public Response create(@Valid LinkCreateDTO dto) {
+        if (dto != null) {
+            Log.infof("Creating link: title='%s', url='%s'", dto.title, dto.url);
+        }
         // check duplicate URL
         Optional<Link> existing = repository.find("url = ?1", dto.url).firstResultOptional();
         if (existing.isPresent()) {
@@ -113,6 +117,86 @@ public class LinkResource {
         link.date = Instant.now();
         repository.persist(link);
         return Response.created(URI.create("/api/links/" + link.id)).entity(link).build();
+    }
+
+    // Upsert by URL and optional content with lastModified comparison
+    @POST
+    @Path("/upsert-content")
+    @Transactional
+    public Response upsertContent(@Valid LinkUpsertContentDTO dto) {
+        Log.infof("upsertContent called: dto=%s", dto != null ?
+                String.format("url='%s', title='%s', description='%s', content=%s, lastModified=%s, nonTextual=%s",
+                        dto.url, dto.title, dto.description,
+                        dto.content != null ? ("present, length=" + dto.content.length()) : "null",
+                        dto.lastModified, dto.nonTextual)
+                : "null");
+
+        // Log submitted content (truncate to avoid excessive logs)
+        if (dto != null) {
+            String title = dto.title;
+            String url = dto.url;
+            String content = dto.content;
+            if (content != null) {
+                int len = content.length();
+                int limit = 2000;
+                String preview = content.substring(0, Math.min(limit, len));
+                String suffix = len > limit ? " …[truncated]" : "";
+                Log.infof("Upsert content received: url='%s', title='%s', contentLength=%d, preview=\"%s\"%s", url, title, len, preview, suffix);
+            } else {
+                Log.infof("Upsert content received: url='%s', title='%s', no content provided", url, title);
+            }
+        }
+        if (dto.nonTextual != null && dto.nonTextual) {
+            // Client indicates non-textual; ensure link exists but do not store content
+            Link link = repository.find("url = ?1", dto.url).firstResult();
+            if (link == null) {
+                link = new Link();
+                link.url = dto.url;
+                link.title = dto.title != null ? dto.title : dto.url;
+                link.description = dto.description;
+                link.status = LinkStatus.TO_PROCESS;
+                link.date = Instant.now();
+                link.updatedAt = Instant.now();
+                repository.persist(link);
+                return Response.created(URI.create("/api/links/" + link.id)).entity(link).build();
+            }
+            return Response.ok(link).build();
+        }
+
+        Link link = repository.find("url = ?1", dto.url).firstResult();
+        Log.infof("Link null or not ? %s", link);
+        boolean isNew = false;
+        if (link == null) {
+            link = new Link();
+            link.url = dto.url;
+            link.title = dto.title != null ? dto.title : dto.url;
+            link.description = dto.description;
+            link.status = LinkStatus.TO_PROCESS;
+            link.date = Instant.now();
+            link.updatedAt = Instant.now();
+            isNew = true;
+        }
+
+        // Decide whether to update content based on lastModified vs updatedAt
+        boolean shouldUpdateContent = isNew || dto.lastModified == null || link.updatedAt == null || dto.lastModified.isAfter(link.updatedAt);
+        Log.infof("Should update content: %s", shouldUpdateContent);
+        // If client provides no content, we won't touch existing content
+        if (shouldUpdateContent && dto.content != null) {
+            link.content = dto.content;
+            link.updatedAt = Instant.now();
+        }
+
+        Log.infof("Will save link: %s",
+                String.format("url='%s', title='%s', description='%s', content=%s, lastModified=%s",
+                        link.url, link.title, link.description,
+                        link.content,
+                        link.updatedAt));
+
+        if (isNew) {
+            repository.persist(link);
+            return Response.created(URI.create("/api/links/" + link.id)).entity(link).build();
+        }
+        return Response.ok(link).build();
     }
 
     @PUT
@@ -144,9 +228,35 @@ public class LinkResource {
     public Link summarize(@PathParam("id") Long id) {
         Link link = repository.findById(id);
         if (link == null) throw new NotFoundException();
-        String summary = summarizationService.summarize(link.url);
+        // Use stored content instead of URL; error if content missing
+        if (link.content == null || link.content.isBlank()) {
+            throw new BadRequestException("Le contenu de ce lien n'est pas disponible en base. Veuillez d'abord enregistrer le contenu.");
+        }
+        String summary = summarizationService.summarize(link.content);
         link.summary = summary;
         return link;
+    }
+
+    // --- Content management (Markdown) ---
+    @PUT
+    @Path("/{id}/content")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Transactional
+    public Link setContent(@PathParam("id") Long id, String markdown) {
+        Link link = repository.findById(id);
+        if (link == null) throw new NotFoundException();
+        link.content = markdown; // may be null or large; stored as CLOB
+        return link;
+    }
+
+    @GET
+    @Path("/{id}/content")
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response getContent(@PathParam("id") Long id) {
+        Link link = repository.findById(id);
+        if (link == null) throw new NotFoundException();
+        String body = link.content == null ? "" : link.content;
+        return Response.ok(body).type(MediaType.TEXT_PLAIN).build();
     }
 
     @POST

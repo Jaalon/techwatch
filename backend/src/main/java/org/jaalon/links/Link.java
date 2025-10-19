@@ -31,6 +31,15 @@ public class Link extends PanacheEntity {
     @Size(max = 8000)
     public String summary;
 
+    // Optional Markdown content with no explicit size limit (stored as CLOB)
+    @Lob
+    @Column(columnDefinition = "CLOB")
+    public String content;
+
+    // Last time we updated the stored content/metadata in DB for this link
+    @NotNull
+    public Instant updatedAt = Instant.now();
+
     @NotNull
     @Enumerated(EnumType.STRING)
     public LinkStatus status = LinkStatus.TO_PROCESS;

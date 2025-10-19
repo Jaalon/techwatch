@@ -12,6 +12,7 @@ module.exports = (env, argv) => {
             background: './src/background.js',
             popup: './src/popup.js',
             options: './src/options.js',
+            content: './src/content.js',
         },
         output: {
             path: path.resolve(__dirname, 'dist'),

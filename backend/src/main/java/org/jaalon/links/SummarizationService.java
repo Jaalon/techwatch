@@ -25,11 +25,11 @@ public class SummarizationService {
     @Inject
     LlmClient llmClient;
 
-    public String summarize(String articleUrl) {
-        Log.info("Starting summarization for URL:" + articleUrl);
+    public String summarize(String content) {
+        Log.info("Starting summarization from stored content. Length=" + (content == null ? 0 : content.length()));
 
-        if (articleUrl == null || articleUrl.isBlank()) {
-            throw new IllegalArgumentException("articleUrl is required");
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("content is required");
         }
         // Find default LLM config
         Optional<LlmConfig> cfgOpt = llmConfigRepository.find("isDefault = true").firstResultOptional();
@@ -41,9 +41,9 @@ public class SummarizationService {
         }
         Log.info("Loaded instruction: " + pi.content );
 
-        String prompt = pi.content.trim() + "\n\n" + articleUrl.trim();
+        String prompt = pi.content.trim() + "\n\n" + content.trim();
 
-        Log.info("Prompt: " + prompt );
+        Log.info("Prompt built with content length: " + content.length());
 
         String out = llmClient.generate(cfg.baseUrl, cfg.apiKey, cfg.model, prompt);
 

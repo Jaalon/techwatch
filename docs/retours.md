@@ -6,13 +6,10 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ---
 
-## Packaging prod
+## plugin browser
 
-* Générer un exécutable qui embarque la partie front
-
-## Workflow
-
-* Revoir le workflow de collecte de liens, ajout à mvt, publication mvt
+* Extraire le contenu d’un article depuis le plugin
+  * Rechercher si l’article existe et si la date de modif est plus récente que la date de sauvegarde -> mise à jour
 
 ## IA
 
@@ -20,10 +17,13 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 * Ajouter la possibilité d’invalider un résumé IA
 * Résumer un article depuis le lien ou depuis le contenu sauvegardé
 
-## plugin browser
+## Packaging prod
 
-* Extraire le contenu d’un article depuis le plugin
-  * Rechercher si l’article existe et si la date de modif est plus récente que la date de sauvegarde -> mise à jour
+* Générer un exécutable qui embarque la partie front
+
+## Workflow
+
+* Revoir le workflow de collecte de liens, ajout à mvt, publication mvt
 
 ## Fonctionnalités
 

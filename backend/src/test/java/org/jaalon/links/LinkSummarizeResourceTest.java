@@ -68,6 +68,14 @@ public class LinkSummarizeResourceTest {
             .then().statusCode(201)
             .extract().jsonPath().getLong("id");
 
+        // Upsert content for the link (required now)
+        given().contentType(ContentType.TEXT)
+            .body("# T\n\nContenu de test pour résumé.")
+        .when()
+            .put("/api/links/" + id + "/content")
+        .then()
+            .statusCode(200);
+
         // Call summarize
         given()
         .when()
