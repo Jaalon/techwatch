@@ -237,6 +237,16 @@ public class LinkResource {
         return link;
     }
 
+    @DELETE
+    @Path("/{id}/summary")
+    @Transactional
+    public Link invalidateSummary(@PathParam("id") Long id) {
+        Link link = repository.findById(id);
+        if (link == null) throw new NotFoundException();
+        link.summary = null;
+        return link;
+    }
+
     // --- Content management (Markdown) ---
     @PUT
     @Path("/{id}/content")

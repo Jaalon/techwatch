@@ -1,6 +1,6 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
-import { updateLink as apiUpdateLink, deleteLink as apiDeleteLink, assignToNext as apiAssignToNext } from '../../api/links'
+import { updateLink as apiUpdateLink, deleteLink as apiDeleteLink, assignToNext as apiAssignToNext, invalidateSummary as apiInvalidateSummary } from '../../api/links'
 import { summarizeLink } from '../../api/ai'
 import TagRow from './TagRow'
 import LinkEditFooter from './LinkEditFooter'
@@ -271,6 +271,23 @@ export default function LinkEditModal({ link, onRequestClose, onSaved }) {
         }
     }
 
+    const [invalidateLoading, setInvalidateLoading] = React.useState(false)
+    const [invalidateError, setInvalidateError] = React.useState('')
+    const onInvalidate = async () => {
+        if (invalidateLoading) return
+        setInvalidateError('')
+        setInvalidateLoading(true)
+        try {
+            await apiInvalidateSummary(l.id)
+            setApiText('')
+        } catch (e) {
+            console.error(e)
+            setInvalidateError(e?.message || 'Failed to invalidate')
+        } finally {
+            setInvalidateLoading(false)
+        }
+    }
+
     const onAssignNextClick = async () => {
         if (assigningNext || assignedNext) return
         setAssigningNext(true)
@@ -371,13 +388,25 @@ export default function LinkEditModal({ link, onRequestClose, onSaved }) {
                                 {/* IA summarize: show either the button or the summary */}
                                 {apiText ? (
                                     <div className="mb-2">
-                                        <label className="block text-xs font-medium tw-text-muted mb-1">Texte IA (résultat API)</label>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="block text-xs font-medium tw-text-muted">Texte IA (résultat API)</label>
+                                            <button
+                                                type="button"
+                                                onClick={onInvalidate}
+                                                disabled={invalidateLoading}
+                                                className="tw-btn tw-btn--sm tw-btn--danger"
+                                                title="Invalider le résumé IA"
+                                            >
+                                                Invalider
+                                            </button>
+                                        </div>
                                         <textarea
                                             className="tw-textarea w-full p-2 text-sm"
                                             rows={3}
                                             readOnly
                                             value={apiText}
                                         />
+                                        {!invalidateLoading && invalidateError && <div className="mt-1"><span className="tw-error">{invalidateError}</span></div>}
                                     </div>
                                 ) : (
                                     Boolean(l?.content && (l.content + '').trim().length > 0) && (

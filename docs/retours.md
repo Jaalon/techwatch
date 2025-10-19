@@ -6,13 +6,6 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ---
 
-## plugin browser
-
-
-## IA
-
-* Ajouter la possibilité d’invalider un résumé IA : bouton aligné à droite du label "Invalider" avec le texte en rouge, avec le même style que Read ou Add to next TechWatch
-
 ## Packaging prod
 
 * Générer un exécutable qui embarque la partie front

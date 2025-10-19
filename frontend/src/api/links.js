@@ -89,3 +89,9 @@ export async function updateLink(id, payload) {
   })
   if (!res.ok) throw new Error(await res.text().catch(() => ''))
 }
+
+export async function invalidateSummary(id) {
+  const res = await fetch(`${BASE}/${id}/summary`, { method: 'DELETE' })
+  if (!res.ok) throw new Error(await res.text().catch(() => ''))
+  return await res.json().catch(() => null)
+}
