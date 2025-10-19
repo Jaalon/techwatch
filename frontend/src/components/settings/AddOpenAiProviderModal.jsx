@@ -1,7 +1,7 @@
 import React from 'react'
 import Modal from '../common/Modal'
 
-export default function AddOpenAiProviderModal({ isOpen, onRequestClose }) {
+export default function AddOpenAiProviderModal({ isOpen, onRequestClose, initialValues }) {
   return (
     <Modal
       isOpen={isOpen}

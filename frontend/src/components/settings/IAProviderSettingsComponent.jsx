@@ -11,6 +11,7 @@ export default function IAProviderSettingsComponent() {
   const [isOpen, setIsOpen] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [provider, setProvider] = useState('perplexity')
+  const [initialValues, setInitialValues] = useState(null)
 
   const [configs, setConfigs] = useState([])
 
@@ -34,8 +35,8 @@ export default function IAProviderSettingsComponent() {
 
   useEffect(() => { loadConfigs() }, [])
 
-  const openModal = () => { resetForm(); setShowModal(true) }
-  const closeModal = () => { setShowModal(false) }
+  const openModal = () => { resetForm(); setInitialValues(null); setShowModal(true) }
+  const closeModal = () => { setShowModal(false); setInitialValues(null) }
 
   const setDefault = async (id) => {
     try {
@@ -72,6 +73,29 @@ export default function IAProviderSettingsComponent() {
       setDeleteError(msg)
       setDeleting(false)
     }
+  }
+
+  const inferProviderFromConfig = (c) => {
+    const url = String(c?.baseUrl || '').toLowerCase()
+    const model = String(c?.model || '').toLowerCase()
+    if (url.includes('perplexity.ai')) return 'perplexity'
+    if (url.includes('mistral.ai')) return 'mistral'
+    if (url.includes('openai.com')) return 'openai'
+    // Heuristics for local/docker
+    if (url.includes('localhost') || url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('host.docker.internal') || url.includes('docker')) return 'docker'
+    // As a fallback, try to guess from model id prefixes
+    if (model.startsWith('sonar')) return 'perplexity'
+    if (model.startsWith('mistral')) return 'mistral'
+    return provider // fallback to current selection
+  }
+
+  const handleConfigDoubleClick = (c) => {
+    if (!c) return
+    const inferred = inferProviderFromConfig(c)
+    setProvider(inferred)
+    const iv = { id: c.id, name: c.name, baseUrl: c.baseUrl, apiKey: c.apiKey, model: c.model }
+    setInitialValues(iv)
+    setShowModal(true)
   }
 
   return (
@@ -118,7 +142,7 @@ export default function IAProviderSettingsComponent() {
           {configs.length > 0 ? (
             <ul className="space-y-2">
               {configs.map(c => (
-                <li key={c.id} className="flex items-center gap-3 tw-panel p-2">
+                <li key={c.id} className="flex items-center gap-3 tw-panel p-2" onDoubleClick={() => handleConfigDoubleClick(c)} title="Double-cliquer pour modifier/dupliquer">
                   <div className="flex-1">
                     <div className="font-medium">{c.name} {c.isDefault && <span className="ml-2 text-xs text-green-600">(default)</span>}</div>
                     <div className="text-xs text-gray-600 dark:text-gray-400">{c.model} • {c.baseUrl}</div>
@@ -151,24 +175,28 @@ export default function IAProviderSettingsComponent() {
           isOpen={showModal}
           onRequestClose={closeModal}
           onSaved={loadConfigs}
+          initialValues={initialValues}
         />
       )}
       {showModal && provider === 'docker' && (
         <AddDockerProviderModal
           isOpen={showModal}
           onRequestClose={closeModal}
+          initialValues={initialValues}
         />
       )}
       {showModal && provider === 'self-managed' && (
         <AddSelfManagedProviderModal
           isOpen={showModal}
           onRequestClose={closeModal}
+          initialValues={initialValues}
         />
       )}
       {showModal && provider === 'openai' && (
         <AddOpenAiProviderModal
           isOpen={showModal}
           onRequestClose={closeModal}
+          initialValues={initialValues}
         />
       )}
       {showModal && provider === 'mistral' && (
@@ -176,6 +204,7 @@ export default function IAProviderSettingsComponent() {
           isOpen={showModal}
           onRequestClose={closeModal}
           onSaved={loadConfigs}
+          initialValues={initialValues}
         />
       )}
 

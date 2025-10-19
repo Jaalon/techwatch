@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import Modal from '../common/Modal'
-import { createConfig as apiCreateConfig } from '../../api/llm'
+import { createConfig as apiCreateConfig, updateConfig as apiUpdateConfig } from '../../api/llm'
 
-export default function AddPerplexityProviderModal({ isOpen, onRequestClose, onSaved }) {
+export default function AddPerplexityProviderModal({ isOpen, onRequestClose, onSaved, initialValues }) {
   const [name, setName] = useState('')
   const [baseUrl, setBaseUrl] = useState('https://api.perplexity.ai')
   const [apiKey, setApiKey] = useState('')
@@ -13,14 +13,15 @@ export default function AddPerplexityProviderModal({ isOpen, onRequestClose, onS
 
   useEffect(() => {
     if (!isOpen) return
-    // reset form each time it opens
-    setName('')
-    setBaseUrl('https://api.perplexity.ai')
-    setApiKey('')
-    setSelectedModel('')
+    // reset or prefill form each time it opens
+    const iv = initialValues || {}
+    setName(iv.name || '')
+    setBaseUrl(iv.baseUrl || 'https://api.perplexity.ai')
+    setApiKey(iv.apiKey || '')
+    setSelectedModel(iv.model || '')
     setSaving(false)
     setError('')
-  }, [isOpen])
+  }, [isOpen, initialValues])
 
   const canSave = selectedModel && name && baseUrl && apiKey
 
@@ -29,7 +30,12 @@ export default function AddPerplexityProviderModal({ isOpen, onRequestClose, onS
     setSaving(true)
     setError('')
     try {
-      await apiCreateConfig({ name, baseUrl, apiKey, model: selectedModel })
+      const payload = { name, baseUrl, apiKey, model: selectedModel }
+      if (initialValues && initialValues.id) {
+        await apiUpdateConfig(initialValues.id, payload)
+      } else {
+        await apiCreateConfig(payload)
+      }
       onSaved?.()
       onRequestClose?.()
     } catch (e) {

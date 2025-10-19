@@ -35,6 +35,7 @@ public class LlmResource {
         public Long id;
         public String name;
         public String baseUrl;
+        public String apiKey;
         public String model;
         public boolean isDefault;
         public static ViewDTO from(LlmConfig c) {
@@ -42,6 +43,7 @@ public class LlmResource {
             v.id = c.id;
             v.name = c.name;
             v.baseUrl = c.baseUrl;
+            v.apiKey = c.apiKey;
             v.model = c.model;
             v.isDefault = c.isDefault;
             return v;
@@ -91,6 +93,25 @@ public class LlmResource {
         c.isDefault = count == 0;
         repository.persist(c);
         return created(URI.create("/api/llm/configs/" + c.id)).entity(ViewDTO.from(c)).build();
+    }
+
+    @PUT
+    @Path("/configs/{id}")
+    @Transactional
+    public ViewDTO updateConfig(@PathParam("id") Long id, @Valid CreateDTO dto) {
+        if (id == null) throw new BadRequestException("id is required");
+        if (dto == null) throw new BadRequestException("Body is required");
+        if (dto.name == null || dto.name.isBlank()) throw new BadRequestException("name is required");
+        if (dto.baseUrl == null || dto.baseUrl.isBlank()) throw new BadRequestException("baseUrl is required");
+        if (dto.apiKey == null || dto.apiKey.isBlank()) throw new BadRequestException("apiKey is required");
+        if (dto.model == null || dto.model.isBlank()) throw new BadRequestException("model is required");
+        LlmConfig existing = repository.findById(id);
+        if (existing == null) throw new NotFoundException();
+        existing.name = dto.name.trim();
+        existing.baseUrl = dto.baseUrl.trim();
+        existing.apiKey = dto.apiKey.trim();
+        existing.model = dto.model.trim();
+        return ViewDTO.from(existing);
     }
 
     @PUT

@@ -1,7 +1,7 @@
 import React from 'react'
 import Modal from '../common/Modal'
 
-export default function AddSelfManagedProviderModal({ isOpen, onRequestClose }) {
+export default function AddSelfManagedProviderModal({ isOpen, onRequestClose, initialValues }) {
   return (
     <Modal
       isOpen={isOpen}

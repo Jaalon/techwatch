@@ -27,6 +27,16 @@ export async function createConfig(payload) {
   return await res.json()
 }
 
+export async function updateConfig(id, payload) {
+  const res = await fetch(`${BASE}/configs/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  if (!res.ok) throw new Error(await res.text().catch(() => ''))
+  return await res.json()
+}
+
 export async function setDefaultConfig(id) {
   const res = await fetch(`${BASE}/configs/${id}/default`, { method: 'PUT' })
   if (!res.ok) throw new Error(await res.text().catch(() => ''))

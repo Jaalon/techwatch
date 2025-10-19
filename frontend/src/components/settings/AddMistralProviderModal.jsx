@@ -1,8 +1,24 @@
 import React, { useState, useEffect } from 'react'
 import Modal from '../common/Modal'
-import { listMistralModels as apiListMistralModels, createConfig as apiCreateConfig } from '../../api/llm'
+import { listMistralModels as apiListMistralModels, createConfig as apiCreateConfig, updateConfig as apiUpdateConfig } from '../../api/llm'
 
-export default function AddMistralProviderModal({ isOpen, onRequestClose, onSaved }) {
+export default function AddMistralProviderModal({ isOpen, onRequestClose, onSaved, initialValues }) {
+  // Normalize a Mistral base URL so that UI never shows '/v1' and fetch/save logic can append it exactly once
+  const stripV1 = (url) => {
+    if (!url) return ''
+    let u = String(url).trim()
+    // remove whitespace and trailing slashes first
+    while (u.endsWith('/')) u = u.slice(0, -1)
+    // If user pasted endpoint variants, collapse to root without /v1
+    if (u.toLowerCase().endsWith('/v1/models')) {
+      u = u.slice(0, -7) // drop '/models' to keep '/v1'
+    }
+    if (u.toLowerCase().endsWith('/v1')) {
+      u = u.slice(0, -3) // drop '/v1'
+      while (u.endsWith('/')) u = u.slice(0, -1) // ensure no trailing slash
+    }
+    return u
+  }
   const [name, setName] = useState('')
   const [baseUrl, setBaseUrl] = useState('https://api.mistral.ai')
   const [apiKey, setApiKey] = useState('')
@@ -15,16 +31,17 @@ export default function AddMistralProviderModal({ isOpen, onRequestClose, onSave
 
   useEffect(() => {
     if (!isOpen) return
-    setName('')
-    setBaseUrl('https://api.mistral.ai')
-    setApiKey('')
+    const iv = initialValues || {}
+    setName(iv.name || '')
+    setBaseUrl(stripV1(iv.baseUrl) || 'https://api.mistral.ai')
+    setApiKey(iv.apiKey || '')
     setModels([])
-    setSelectedModelId('')
+    setSelectedModelId(iv.model || '')
     setModelsError('')
     setModelsLoading(false)
     setSaving(false)
     setSaveError('')
-  }, [isOpen])
+  }, [isOpen, initialValues])
 
   useEffect(() => {
     const canFetch = !!baseUrl && !!apiKey
@@ -34,7 +51,7 @@ export default function AddMistralProviderModal({ isOpen, onRequestClose, onSave
       try {
         setModelsLoading(true)
         setModelsError('')
-        const data = await apiListMistralModels(baseUrl, apiKey)
+        const data = await apiListMistralModels(stripV1(baseUrl), apiKey)
         if (aborted) return
         // data is the raw Mistral "data" array with id/name/etc
         const items = Array.isArray(data) ? data : []
@@ -79,7 +96,12 @@ export default function AddMistralProviderModal({ isOpen, onRequestClose, onSave
           urlToSave = urlToSave + '/v1'
         }
       }
-      await apiCreateConfig({ name, baseUrl: urlToSave, apiKey, model: selectedModelId })
+      const payload = { name, baseUrl: urlToSave, apiKey, model: selectedModelId }
+      if (initialValues && initialValues.id) {
+        await apiUpdateConfig(initialValues.id, payload)
+      } else {
+        await apiCreateConfig(payload)
+      }
       try { onSaved && onSaved() } catch {}
       onRequestClose?.()
     } catch (e) {

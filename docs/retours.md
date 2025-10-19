@@ -11,13 +11,18 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ## IA
 
-* Configuration LLM : ajouter la possibilité de supprimer un modèle, bouton de suppression (croix même style que la croix close de la modale, mais avec la croix en rouge). Ce style d’élément doit être entré comme un style CSS commun.
-* Modifier la configuration LLM : double cliquer pour ouvrir la modal de modification (la même que celui de création du LLM, mais avec les paramètres déjà renseignés). Possibilité de modifier le nom, la clé et l’API
 * Ajouter la possibilité d’invalider un résumé IA : bouton aligné à droite du label "Invalider" avec le texte en rouge, avec le même style que Read ou Add to next TechWatch
 
 ## Packaging prod
 
 * Générer un exécutable qui embarque la partie front
+
+## Bugs
+
+* Certaines catégories ne semblent pas être fixe. Peut-être lorsqu’un article est ajouté à une mvt, à fouiller (ex: Article 1 qui oscille entre DevSecOps et IA)
+* Problème du bouton "Add to next TechWatch" qui n’est pas désactivé si la mvt est déjà présente
+
+# Pour plus tard
 
 ## Workflow
 
@@ -26,13 +31,6 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 ## Fonctionnalités
 
 * Tri par articles qui se sont pas dans une mvt
-
-## Bugs
-
-* Certaines catégories ne semblent pas être fixe. Peut être lorsqu’un article est ajouté à une mvt, à fouiller (ex: Article 1 qui oscille entre DevSecOps et IA)
-* Problème du bouton "Add to next TechWatch" qui n’est pas désactivé si la mvt est déjà présente
-
-# Pour plus tard
 
 ## IA configuration
 
