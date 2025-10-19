@@ -33,6 +33,13 @@ export async function setDefaultConfig(id) {
   return await res.json()
 }
 
+export async function deleteConfig(id) {
+  const res = await fetch(`${BASE}/configs/${id}`, { method: 'DELETE' })
+  if (res.status === 204) return true
+  if (!res.ok) throw new Error(await res.text().catch(() => ''))
+  return true
+}
+
 export async function listMistralModels(baseUrl, apiKey) {
   const res = await fetch(`${BASE}/mistral/models`, {
     method: 'POST',
@@ -43,8 +50,7 @@ export async function listMistralModels(baseUrl, apiKey) {
   let json
   try { json = text ? JSON.parse(text) : null } catch { json = null }
   if (res.status === 200) {
-    const arr = Array.isArray(json?.data) ? json.data : []
-    return arr
+      return Array.isArray(json?.data) ? json.data : []
   }
   if (res.status === 422) {
     const msg = (json && Array.isArray(json.detail) && json.detail[0] && json.detail[0].msg) ? json.detail[0].msg : (text || 'Unprocessable Entity')

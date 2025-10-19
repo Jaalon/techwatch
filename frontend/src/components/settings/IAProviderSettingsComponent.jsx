@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { listConfigs as apiListConfigs, setDefaultConfig as apiSetDefaultConfig } from '../../api/llm'
+import { listConfigs as apiListConfigs, setDefaultConfig as apiSetDefaultConfig, deleteConfig as apiDeleteConfig } from '../../api/llm'
 import AddPerplexityProviderModal from './AddPerplexityProviderModal.jsx'
 import AddDockerProviderModal from './AddDockerProviderModal.jsx'
 import AddSelfManagedProviderModal from './AddSelfManagedProviderModal.jsx'
 import AddOpenAiProviderModal from './AddOpenAiProviderModal.jsx'
 import AddMistralProviderModal from './AddMistralProviderModal.jsx'
+import DeleteConfirmModal from '../common/DeleteConfirmModal.jsx'
 
 export default function IAProviderSettingsComponent() {
   const [isOpen, setIsOpen] = useState(false)
@@ -12,6 +13,12 @@ export default function IAProviderSettingsComponent() {
   const [provider, setProvider] = useState('perplexity')
 
   const [configs, setConfigs] = useState([])
+
+  // Delete modal state
+  const [showDelete, setShowDelete] = useState(false)
+  const [toDelete, setToDelete] = useState({ id: null, name: '' })
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const resetForm = () => {}
 
@@ -36,6 +43,34 @@ export default function IAProviderSettingsComponent() {
       await loadConfigs()
     } catch (e) {
       console.error(e)
+    }
+  }
+
+  const openDeleteModal = (id, name) => {
+    setToDelete({ id, name })
+    setDeleteError('')
+    setDeleting(false)
+    setShowDelete(true)
+  }
+  const closeDeleteModal = () => {
+    setShowDelete(false)
+    setToDelete({ id: null, name: '' })
+    setDeleteError('')
+    setDeleting(false)
+  }
+  const confirmDelete = async () => {
+    if (!toDelete.id) return
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      await apiDeleteConfig(toDelete.id)
+      closeDeleteModal()
+      await loadConfigs()
+    } catch (e) {
+      console.error(e)
+      const msg = typeof e?.message === 'string' ? e.message : 'Suppression impossible'
+      setDeleteError(msg)
+      setDeleting(false)
     }
   }
 
@@ -88,12 +123,20 @@ export default function IAProviderSettingsComponent() {
                     <div className="font-medium">{c.name} {c.isDefault && <span className="ml-2 text-xs text-green-600">(default)</span>}</div>
                     <div className="text-xs text-gray-600 dark:text-gray-400">{c.model} • {c.baseUrl}</div>
                   </div>
-                  <button
-                    className="tw-btn tw-btn--sm"
-                    onClick={() => setDefault(c.id)}
-                    disabled={c.isDefault}
-                    title={c.isDefault ? 'Déjà par défaut' : 'Définir par défaut'}
-                  >Set default</button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="tw-btn tw-btn--sm"
+                      onClick={() => setDefault(c.id)}
+                      disabled={c.isDefault}
+                      title={c.isDefault ? 'Déjà par défaut' : 'Définir par défaut'}
+                    >Set default</button>
+                    <button
+                      className="tw-btn tw-btn--sm tw-btn--danger"
+                      onClick={() => openDeleteModal(c.id, c.name)}
+                      title="Supprimer"
+                      aria-label={`Supprimer ${c.name}`}
+                    >&times;</button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -135,6 +178,17 @@ export default function IAProviderSettingsComponent() {
           onSaved={loadConfigs}
         />
       )}
+
+      {showDelete && (
+        <DeleteConfirmModal
+          isOpen={showDelete}
+          name={toDelete.name}
+          onConfirm={confirmDelete}
+          onRequestClose={closeDeleteModal}
+          isBusy={deleting}
+          errorMessage={deleteError}
+        />)
+      }
     </section>
   )
 }

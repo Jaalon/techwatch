@@ -8,10 +8,16 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static jakarta.ws.rs.core.Response.*;
 
 @Path("/api/llm")
 @Produces(MediaType.APPLICATION_JSON)
@@ -84,7 +90,7 @@ public class LlmResource {
         long count = repository.count();
         c.isDefault = count == 0;
         repository.persist(c);
-        return Response.created(URI.create("/api/llm/configs/" + c.id)).entity(ViewDTO.from(c)).build();
+        return created(URI.create("/api/llm/configs/" + c.id)).entity(ViewDTO.from(c)).build();
     }
 
     @PUT
@@ -97,6 +103,21 @@ public class LlmResource {
         repository.findAll().list().forEach(c -> c.isDefault = false);
         target.isDefault = true;
         return ViewDTO.from(target);
+    }
+
+    @DELETE
+    @Path("/configs/{id}")
+    @Transactional
+    public Response deleteConfig(@PathParam("id") Long id) {
+        LlmConfig target = repository.findById(id);
+        if (target == null) throw new NotFoundException();
+        if (target.isDefault) {
+            return status(Status.CONFLICT)
+                    .entity(Map.of("error", "Cannot delete default configuration"))
+                    .build();
+        }
+        repository.delete(target);
+        return noContent().build();
     }
 
     public static class MistralModelsReq {
@@ -113,21 +134,21 @@ public class LlmResource {
         if (apiKey == null || apiKey.isBlank()) throw new BadRequestException("apiKey is required");
         try {
             String url = (baseUrl.endsWith("/")) ? (baseUrl + "v1/models") : (baseUrl + "/v1/models");
-            java.net.http.HttpRequest httpRequest = java.net.http.HttpRequest.newBuilder()
+            HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(java.net.URI.create(url))
                     .header("Authorization", "Bearer " + apiKey)
                     .GET()
                     .build();
-            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-            java.net.http.HttpResponse<String> resp = client.send(httpRequest, java.net.http.HttpResponse.BodyHandlers.ofString(java.nio.charset.StandardCharsets.UTF_8));
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> resp = client.send(httpRequest, BodyHandlers.ofString(java.nio.charset.StandardCharsets.UTF_8));
             int code = resp.statusCode();
             String body = resp.body();
             if (code == 200 || code == 422) {
-                return jakarta.ws.rs.core.Response.status(code).entity(body).build();
+                return status(code).entity(body).build();
             }
-            return jakarta.ws.rs.core.Response.status(502).entity("Upstream error: HTTP " + code).build();
+            return status(502).entity("Upstream error: HTTP " + code).build();
         } catch (Exception e) {
-            return jakarta.ws.rs.core.Response.status(502).entity("Failed to fetch models: " + e.getMessage()).build();
+            return status(502).entity("Failed to fetch models: " + e.getMessage()).build();
         }
     }
 }

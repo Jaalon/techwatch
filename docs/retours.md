@@ -8,14 +8,12 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ## plugin browser
 
-* Extraire le contenu d’un article depuis le plugin
-  * Rechercher si l’article existe et si la date de modif est plus récente que la date de sauvegarde -> mise à jour
 
 ## IA
 
 * Configuration LLM : ajouter la possibilité de supprimer un modèle, bouton de suppression (croix même style que la croix close de la modale, mais avec la croix en rouge). Ce style d’élément doit être entré comme un style CSS commun.
-* Ajouter la possibilité d’invalider un résumé IA
-* Résumer un article depuis le lien ou depuis le contenu sauvegardé
+* Modifier la configuration LLM : double cliquer pour ouvrir la modal de modification (la même que celui de création du LLM, mais avec les paramètres déjà renseignés). Possibilité de modifier le nom, la clé et l’API
+* Ajouter la possibilité d’invalider un résumé IA : bouton aligné à droite du label "Invalider" avec le texte en rouge, avec le même style que Read ou Add to next TechWatch
 
 ## Packaging prod
 
