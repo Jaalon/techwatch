@@ -16,9 +16,7 @@ export default function SearchLinkComponent({
           <option value="">All statuses</option>
           <option value="TO_PROCESS">To process</option>
           <option value="KEEP">Keep</option>
-          <option value="LATER">Later</option>
           <option value="REJECT">Rejected</option>
-          <option value="NEXT_TECHWATCH">Next TechWatch</option>
         </select>
         <select className="tw-input" value={sort} onChange={e => setSort(e.target.value)}>
           <option value="date">Date</option>

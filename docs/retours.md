@@ -8,13 +8,21 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ## Bugs
 
-* Problème du bouton "Add to next TechWatch" qui n’est pas désactivé si la mvt est déjà présente
+* Lorsqu’on crée un techwatch, si aucun techwatch est actif, celui-ci est activé automatiquement.
+* Lorsqu’on ferme une techwatch, on active la techwatch suivante par ordre de date, ou on en crée une active la semaine suivante.
+
+# Link list
+
+* N’afficher que les articles sans mvt
 
 # Pour plus tard
 
 ## Workflow
 
 * Revoir le workflow de collecte de liens, ajout à mvt, publication mvt
+  * REJECTED : On garde pas le lien
+  * KEEP : Lien à garder
+  * TO_HANDLE: Lien à traiter
 
 ## Fonctionnalités
 
@@ -29,7 +37,7 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 * Prompt directives -> champ texte plus grand
 * Base de données des ressources (RAG)
 
-## Base de données des liens
+## Base de données
 
 * Filtres avancés
 * Recherche sémantique (avec un LLM)
@@ -38,6 +46,7 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
   * Option “Ignorer temporairement” 
 * Purge manuelle des liens rejetés 
 * Import de liens depuis Confluence/Notion
+* Backup/Restore
 
 ## Architecture
 

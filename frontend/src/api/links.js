@@ -95,3 +95,34 @@ export async function invalidateSummary(id) {
   if (!res.ok) throw new Error(await res.text().catch(() => ''))
   return await res.json().catch(() => null)
 }
+
+export async function getLink(id) {
+  const res = await fetch(`${BASE}/${id}`)
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '')
+    throw new Error(txt || `Server error (${res.status})`)
+  }
+  return await res.json()
+}
+
+// Returns true if the link already belongs to an ACTIVE TechWatch
+export async function getLinkInActiveTechWatch(id) {
+  const res = await fetch(`${BASE}/${id}/in-active-techwatch`)
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '')
+    throw new Error(txt || `Server error (${res.status})`)
+  }
+  const data = await res.json().catch(() => null)
+  return !!(data && data.inActiveTechWatch)
+}
+
+// Returns true if the link belongs to any TechWatch (any status)
+export async function getLinkInAnyTechWatch(id) {
+  const res = await fetch(`${BASE}/${id}/in-any-techwatch`)
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '')
+    throw new Error(txt || `Server error (${res.status})`)
+  }
+  const data = await res.json().catch(() => null)
+  return !!(data && data.inAnyTechWatch)
+}

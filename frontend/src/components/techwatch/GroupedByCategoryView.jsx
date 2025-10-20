@@ -14,7 +14,7 @@ function GroupedByCategoryView({
   const [chosenCategory, setChosenCategory] = useState({}) // { [linkId]: tagName | 'Uncategorized' }
   const [draggingLinkId, setDraggingLinkId] = useState(null)
   const [showBottomChooserFor, setShowBottomChooserFor] = useState(null)
-  const [editLink, setEditLink] = useState(null)
+  const [editLinkId, setEditLinkId] = useState(null)
 
   const storageKey = techWatchId ? `mvtCategory:${techWatchId}` : null
   // Load saved categories for this TechWatch
@@ -103,7 +103,7 @@ function GroupedByCategoryView({
         draggable
         onDragStart={(e) => onDragStart(e, l)}
         onDragEnd={onDragEnd}
-        onDoubleClick={() => setEditLink(l)}
+        onDoubleClick={() => setEditLinkId(l.id)}
         className="py-1 rounded cursor-grab flex items-center">
       {isMvt ? null : <span>- </span>}
       <a href={l.url} target="_blank" rel="noreferrer" onDoubleClick={(e) => e.stopPropagation()}>{l.title}</a>
@@ -170,8 +170,8 @@ function GroupedByCategoryView({
         )}
       </div>
 
-      {editLink && (
-        <LinkEditModal link={editLink} onRequestClose={() => setEditLink(null)} onSaved={onEdited} />
+      {editLinkId && (
+        <LinkEditModal linkId={editLinkId} onRequestClose={() => setEditLinkId(null)} onSaved={onEdited} />
       )}
     </div>
   )

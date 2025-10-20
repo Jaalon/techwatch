@@ -427,7 +427,7 @@ Opera accepts Chrome extensions natively. You can:
 |Browse the web and click the extension icon to add links
 
 |2. *Sort*
-|In the web interface, classify links (To Process / Keep / Reject)
+|In the web interface, classify links (To Process / Keep / Rejected)
 
 |3. *Organize*
 |Create categories and associate them with links

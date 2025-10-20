@@ -17,10 +17,10 @@ export default function LinkListComponent({
     return (
         <section className="mb-3 tw-searchbar p-2 rounded">
             <ul className="list-none p-0 tw-divide-y tw-list">
-                {(links || []).map(l => (
+                {(links || []).map(link => (
                     <LinkItem
-                        key={l.id}
-                        link={l}
+                        key={link.id}
+                        link={link}
                         tagInputs={tagInputs}
                         setTagInputs={setTagInputs}
                         tagOptions={tagOptions}

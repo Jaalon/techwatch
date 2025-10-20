@@ -1,23 +1,36 @@
 import React from 'react'
 import LinkEditModal from './LinkEditModal'
+import { getLinkInAnyTechWatch } from '../../api/links'
 
 function LinkItem({
                       link,
                       onUpdateStatus,
                       onEdited
                   }) {
-    const l = link
     const [showMagic, setShowMagic] = React.useState(false)
     const [modalPos, setModalPos] = React.useState({ x: 100, y: 100 })
     const [dragging, setDragging] = React.useState(false)
     const dragOffsetRef = React.useRef({ x: 0, y: 0 })
-    const [desc, setDesc] = React.useState(l.description || '')
+    const [desc, setDesc] = React.useState(link.description || '')
 
     // Resize state
     const [modalSize, setModalSize] = React.useState({ w: 600, h: 380 })
     const [resizing, setResizing] = React.useState(false)
     const [resizeDir, setResizeDir] = React.useState('se') // n, s, e, w, ne, nw, se, sw
     const resizeStartRef = React.useRef({ x: 0, y: 0, w: 0, h: 0, startX: 0, startY: 0, dir: 'se' })
+
+    // Flag indicating whether the link is already present in any TechWatch (current or another)
+    const [inAnyTechWatch, setInAnyTechWatch] = React.useState(false)
+
+    React.useEffect(() => {
+        let cancelled = false
+        if (link && link.id != null) {
+            getLinkInAnyTechWatch(link.id)
+                .then((val) => { if (!cancelled) setInAnyTechWatch(!!val) })
+                .catch(() => { /* ignore */ })
+        }
+        return () => { cancelled = true }
+    }, [link && link.id])
 
     const openModal = React.useCallback(() => {
         // Position the modal horizontally centered and align the top with the bottom of the tabs/menu if possible
@@ -43,8 +56,8 @@ function LinkItem({
 
     const closeModal = React.useCallback(async () => {
         try {
-            if ((desc || '') !== (l.description || '')) {
-                await fetch(`/api/links/${l.id}`, {
+            if ((desc || '') !== (link.description || '')) {
+                await fetch(`/api/links/${link.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ description: desc })
@@ -55,13 +68,7 @@ function LinkItem({
         } finally {
             setShowMagic(false)
         }
-    }, [desc, l.description, l.id, setShowMagic])
-
-    const onHeaderMouseDown = (e) => {
-        e.preventDefault()
-        setDragging(true)
-        dragOffsetRef.current = { x: e.clientX - modalPos.x, y: e.clientY - modalPos.y }
-    }
+    }, [desc, link.description, link.id, setShowMagic])
 
     React.useEffect(() => {
         if (!dragging) return
@@ -82,13 +89,6 @@ function LinkItem({
             document.removeEventListener('mouseup', onUp)
         }
     }, [dragging, modalPos.x, modalPos.y])
-
-    const onResizeMouseDown = (dir) => (e) => {
-        e.preventDefault()
-        setResizing(true)
-        setResizeDir(dir)
-        resizeStartRef.current = { x: e.clientX, y: e.clientY, w: modalSize.w, h: modalSize.h, startX: modalPos.x, startY: modalPos.y, dir }
-    }
 
     React.useEffect(() => {
         if (!resizing) return
@@ -180,33 +180,44 @@ function LinkItem({
     }, [showMagic, closeModal])
 
     const statusClass = React.useMemo(() => {
-        const s = (l.status || '').toUpperCase()
+        const s = (link.status || '').toUpperCase()
         if (s === 'KEEP') return 'tw-item--keep'
         if (s === 'LATER') return 'tw-item--later'
         if (s === 'REJECT') return 'tw-item--reject'
         return ''
-    }, [l.status])
+    }, [link.status])
 
     return (
         <li className={`tw-item ${statusClass} p-3 text-left`} onDoubleClick={openModal}>
             <div className="flex items-start gap-2">
                 <div className="flex-1">
-                    <a href={l.url}
+                    <a href={link.url}
                        target="_blank"
                        rel="noreferrer"
-                       onDoubleClick={(e) => e.stopPropagation()}>{l.title}</a>
-                    {l.description ? <span> - {l.description}</span> : null}
+                       onDoubleClick={(e) => e.stopPropagation()}>{link.title}</a>
+                    {link.description ? <span> - {link.description}</span> : null}
                 </div>
+                {inAnyTechWatch ? (
+                    <span
+                        className="ml-1 text-xs opacity-70 select-none"
+                        title="Déjà présent dans une mvt"
+                        onDoubleClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
+                        ®
+                    </span>
+                ) : null}
+
                 <select
                     className="tw-input ml-2"
-                    value={l.status || ''}
+                    value={link.status || ''}
                     title="Status"
                     onDoubleClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                     onChange={(e) => {
                         const newStatus = e.target.value
-                        if (newStatus && newStatus !== l.status) {
-                            try { onUpdateStatus && onUpdateStatus(l.id, newStatus) } catch {}
+                        if (newStatus && newStatus !== link.status) {
+                            try { onUpdateStatus && onUpdateStatus(link.id, newStatus) } catch {}
                         }
                     }}
                 >
@@ -217,7 +228,7 @@ function LinkItem({
             </div>
 
             {showMagic && (
-                <LinkEditModal link={l} onRequestClose={() => setShowMagic(false)} onSaved={onEdited} />
+                <LinkEditModal linkId={link.id} onRequestClose={() => setShowMagic(false)} onSaved={onEdited} />
             )}
         </li>
     )

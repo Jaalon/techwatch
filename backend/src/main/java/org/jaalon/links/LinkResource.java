@@ -98,6 +98,42 @@ public class LinkResource {
         return link;
     }
 
+    /**
+     * Returns whether the given link already belongs to any ACTIVE TechWatch.
+     * This avoids ambiguous client-side flags like inActiveTw/inActive/etc.
+     */
+    @GET
+    @Path("/{id}/in-active-techwatch")
+    public java.util.Map<String, Object> isInActiveTechWatch(@PathParam("id") Long id) {
+        Link link = repository.findById(id);
+        if (link == null) throw new NotFoundException();
+        var em = repository.getEntityManager();
+        Long count = em.createQuery(
+                "select count(l) from Link l join l.techWatches t where l.id = :id and t.status = :status",
+                Long.class)
+            .setParameter("id", id)
+            .setParameter("status", org.jaalon.techwatch.TechWatchStatus.ACTIVE)
+            .getSingleResult();
+        boolean inActive = count != null && count > 0L;
+        return java.util.Map.of("inActiveTechWatch", inActive);
+    }
+
+    /** Returns whether the given link belongs to any TechWatch (regardless of status). */
+    @GET
+    @Path("/{id}/in-any-techwatch")
+    public java.util.Map<String, Object> isInAnyTechWatch(@PathParam("id") Long id) {
+        Link link = repository.findById(id);
+        if (link == null) throw new NotFoundException();
+        var em = repository.getEntityManager();
+        Long count = em.createQuery(
+                "select count(l) from Link l join l.techWatches t where l.id = :id",
+                Long.class)
+            .setParameter("id", id)
+            .getSingleResult();
+        boolean inAny = count != null && count > 0L;
+        return java.util.Map.of("inAnyTechWatch", inAny);
+    }
+
     @POST
     @Transactional
     public Response create(@Valid LinkCreateDTO dto) {
