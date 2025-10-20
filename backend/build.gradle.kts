@@ -13,7 +13,6 @@ dependencies {
     implementation(enforcedPlatform("io.quarkus.platform:quarkus-bom:3.28.2"))
     implementation("io.quarkus:quarkus-rest")
     implementation("io.quarkus:quarkus-web-dependency-locator")
-    // H2 database (file mode)
     implementation("io.quarkus:quarkus-jdbc-h2")
     implementation("io.quarkus:quarkus-undertow")
     implementation("io.quarkus:quarkus-smallrye-openapi")
@@ -50,21 +49,19 @@ tasks.withType<JavaCompile> {
 
 tasks.register<Copy>("copyFrontend") {
     dependsOn(":frontend:build")
-    from(project(":frontend").layout.buildDirectory.dir("dist"))
-    into(layout.buildDirectory.dir("resources/main/META-INF/resources"))
+    from(project(":frontend").layout.projectDirectory.dir("dist"))
+    into(layout.buildDirectory.dir("generated/frontend-resources/META-INF/resources"))
 }
 
 tasks.named("processResources") {
     dependsOn("copyFrontend")
 }
 
-tasks.register<Exec>("setNativeProperties") {
-    System.setProperty("quarkus.native.enabled", "true")
-    System.setProperty("quarkus.package.jar.enabled", "false")
-}
 
-tasks.register<Exec>("fullNativeBuild") {
-    dependsOn("copyFrontend", "setNativeProperties", "quarkusBuild")
-    group = "build"
-    description = "Build native executable with embedded frontend"
+sourceSets {
+    named("main") {
+        resources {
+            srcDir(layout.buildDirectory.dir("generated/frontend-resources"))
+        }
+    }
 }

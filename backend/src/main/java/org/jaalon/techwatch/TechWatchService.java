@@ -55,11 +55,6 @@ public class TechWatchService {
         if (!removed) {
             throw new NotFoundException();
         }
-        // Update legacy field if it pointed to this TW; set to another associated TW if any, else null
-        if (link.techwatchId != null && link.techwatchId.equals(tw.id)) {
-            Long replacement = link.techWatches.stream().findFirst().map(t -> t.id).orElse(null);
-            link.techwatchId = replacement;
-        }
         // Do not change link.status automatically.
     }
 
@@ -99,8 +94,6 @@ public class TechWatchService {
         if (!link.techWatches.contains(target)) {
             link.techWatches.add(target);
         }
-        // Maintain legacy field for backward compatibility (last assigned)
-        link.techwatchId = target.id;
         // Consider KEEP when assigned to any TechWatch
         if (link.status == LinkStatus.NEXT_TECHWATCH || link.status == LinkStatus.TO_PROCESS) {
             link.status = LinkStatus.KEEP;
@@ -122,8 +115,6 @@ public class TechWatchService {
                 l.techWatches.add(target);
                 assigned++;
             }
-            // Maintain legacy field for backward compatibility (last assigned)
-            l.techwatchId = target.id;
             if (l.status == LinkStatus.NEXT_TECHWATCH || l.status == LinkStatus.TO_PROCESS) {
                 l.status = LinkStatus.KEEP;
             }

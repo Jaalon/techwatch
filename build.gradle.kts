@@ -31,5 +31,20 @@ tasks.register("dev") {
 
 tasks.register("prodBuild") {
     group = "build"
-    dependsOn(":backend:fullNativeBuild")
+    description = "Build frontend, copy assets into backend, and produce Quarkus native image including static resources"
+    dependsOn(":frontend:build", ":backend:copyFrontend")
+    doLast {
+        val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+        if (isWindows) {
+            exec {
+                workingDir = rootDir
+                commandLine("cmd", "/c", "gradlew.bat", ":backend:quarkusBuild", "-Dquarkus.package.type=native")
+            }
+        } else {
+            exec {
+                workingDir = rootDir
+                commandLine("./gradlew", ":backend:quarkusBuild", "-Dquarkus.package.type=native")
+            }
+        }
+    }
 }

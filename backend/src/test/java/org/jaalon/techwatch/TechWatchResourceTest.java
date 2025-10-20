@@ -143,14 +143,16 @@ class TechWatchResourceTest {
         given().when().post("/api/techwatch/" + techWatchId + "/collect-next-links")
                 .then().statusCode(200);
 
-        // Verify links are KEEP and associated
+        // Verify links are KEEP and associated via listing endpoint
         given().when().get("/api/links/" + l1)
                 .then().statusCode(200)
-                .body("status", equalTo("KEEP"))
-                .body("techwatchId", equalTo((int) techWatchId));
+                .body("status", equalTo("KEEP"));
         given().when().get("/api/links/" + l2)
                 .then().statusCode(200)
-                .body("status", equalTo("KEEP"))
-                .body("techwatchId", equalTo((int) techWatchId));
+                .body("status", equalTo("KEEP"));
+        // And the TechWatch links endpoint contains both ids
+        given().when().get("/api/techwatch/" + techWatchId + "/links")
+                .then().statusCode(200)
+                .body("id", hasItems((int) l1, (int) l2));
     }
 }

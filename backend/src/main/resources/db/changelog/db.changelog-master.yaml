@@ -75,25 +75,6 @@ databaseChangeLog:
             tableName: techwatch
             columnName: id
             columnDataType: BIGINT
-        - addColumn:
-            tableName: link
-            columns:
-              - column:
-                  name: techwatchId
-                  type: BIGINT
-        - addForeignKeyConstraint:
-            baseTableName: link
-            baseColumnNames: techwatchId
-            constraintName: fk_link_techwatch
-            referencedTableName: techwatch
-            referencedColumnNames: id
-            onDelete: SET NULL
-        - createIndex:
-            tableName: link
-            indexName: idx_link_techwatchId
-            columns:
-              - column:
-                  name: techwatchId
         - createSequence:
             sequenceName: Link_SEQ
             startValue: 1
@@ -149,8 +130,6 @@ databaseChangeLog:
             columns:
               - column:
                   name: link_id
-        - sql:
-            sql: "INSERT INTO link_techwatch (link_id, techwatch_id) SELECT id, techwatchId FROM link WHERE techwatchId IS NOT NULL"
 
   - changeSet:
       id: 3-tags-and-link-tag

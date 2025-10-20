@@ -42,3 +42,51 @@ quarkus:
   liquibase:
     migrate-at-start: true
     change-log: db/changelog/db.changelog-master.yaml
+
+"%native":
+  quarkus:
+    native:
+      resources:
+        includes: "META-INF/resources/**"
+    http:
+      static-resources:
+        index-page: index.html
+      auth:
+        permission:
+          public-static:
+            policy: permit
+            methods: GET,HEAD
+            paths:
+              - /
+              - /index.html
+              - /favicon.ico
+              - /assets/*
+              - /*.js
+              - /*.css
+              - /*.map
+              - /*.png
+              - /*.svg
+              - /*.ico
+
+
+"%prod":
+  quarkus:
+    http:
+      static-resources:
+        index-page: index.html
+      auth:
+        permission:
+          public-static:
+            policy: permit
+            methods: GET,HEAD
+            paths:
+              - /
+              - /index.html
+              - /favicon.ico
+              - /assets/*
+              - /*.js
+              - /*.css
+              - /*.map
+              - /*.png
+              - /*.svg
+              - /*.ico

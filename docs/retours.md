@@ -6,13 +6,8 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ---
 
-## Packaging prod
-
-* Générer un exécutable qui embarque la partie front
-
 ## Bugs
 
-* Certaines catégories ne semblent pas être fixe. Peut-être lorsqu’un article est ajouté à une mvt, à fouiller (ex: Article 1 qui oscille entre DevSecOps et IA)
 * Problème du bouton "Add to next TechWatch" qui n’est pas désactivé si la mvt est déjà présente
 
 # Pour plus tard
@@ -59,3 +54,7 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 * Settings:
     * revoir la présentation des llms, afficher juste le nom
+
+# Bugs
+
+* Certaines catégories ne semblent pas être fixe. Peut-être lorsqu’un article est ajouté à une mvt, à fouiller (ex: Article 1 qui oscille entre DevSecOps et IA)

@@ -52,10 +52,6 @@ public class Link extends PanacheEntity {
     @com.fasterxml.jackson.annotation.JsonIgnore
     public Set<org.jaalon.techwatch.TechWatch> techWatches = new HashSet<>();
 
-    // Legacy single association column kept for backward compatibility and data migration
-    // Do not use in new code paths.
-    @Deprecated
-    public Long techwatchId;
 
     @NotNull
     public Instant date = Instant.now();
