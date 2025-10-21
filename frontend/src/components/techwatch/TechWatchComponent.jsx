@@ -88,8 +88,8 @@ export default function TechWatchComponent({ techWatchId, date }) {
           />
 
           <div className="mt-4">
-            <button onClick={() => setShowMarkdown(v => !v)}>
-              {showMarkdown ? 'Hide Markdown export' : 'Show Markdown export'}
+            <button className="tw-btn" onClick={() => setShowMarkdown(v => !v)}>
+              {showMarkdown ? 'Hide Markdown export' : 'Markdown export'}
             </button>
             {showMarkdown && (() => {
               let chosen = {}
@@ -109,11 +109,10 @@ export default function TechWatchComponent({ techWatchId, date }) {
               }
               return (
                 <div className="mt-2">
-                  <h4 className="my-2">Export Markdown</h4>
                   <textarea readOnly value={md} rows={10} className="w-full font-mono text-sm"></textarea>
                   <div className="mt-2 flex gap-2">
-                    <button onClick={copyText}>Copy text</button>
-                    <button onClick={download}>Download .md</button>
+                    <button className="tw-btn tw-btn--sm" onClick={copyText}>Copy text</button>
+                    <button className="tw-btn tw-btn--sm" onClick={download}>Download .md</button>
                   </div>
                 </div>
               )

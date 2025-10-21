@@ -113,7 +113,7 @@ function GroupedByCategoryView({
           <button
             title="Remove from this TechWatch"
             onClick={() => onRemoveFromTechWatch && techWatchId && onRemoveFromTechWatch(techWatchId, l.id)}
-            className="ml-auto text-gray-500 hover:text-gray-700"
+            className="ml-auto tw-btn tw-btn--sm tw-btn--danger"
           >&times;</button>
         </>
       ) : (

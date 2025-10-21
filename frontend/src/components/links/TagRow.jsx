@@ -1,20 +1,11 @@
 import React from 'react'
 import { addTag as apiAddTag, removeTag as apiRemoveTag, searchTags as apiSearchTags } from '../../api/links'
 
-/**
- * TagRow: displays tags as chips (click to remove) and an input to add tags on Enter.
- * - Props:
- *   - linkId: number|string (required)
- *   - initialTags: array of tag objects or strings (e.g., [{name:"foo"}] or ["foo"]) (optional)
- *   - className: optional additional class names for outer wrapper
- *   - onChange: optional callback receiving the updated tags array [{name}]
- */
 export default function TagRow({ linkId, initialTags, className = '', onChange }) {
   const [tags, setTags] = React.useState(Array.isArray(initialTags) ? [...initialTags] : [])
   const [tagInput, setTagInput] = React.useState('')
   const [tagOptions, setTagOptions] = React.useState([])
 
-  // If the link or initial tags change, reset local state
   React.useEffect(() => {
     setTags(Array.isArray(initialTags) ? [...initialTags] : [])
     setTagInput('')

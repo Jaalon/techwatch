@@ -36,7 +36,7 @@ export default function NewTechWatchComponent({ onCreated }) {
         <input type="number" min={1} max={100} value={maxArticles}
                onChange={e => setMaxArticles(parseInt(e.target.value || '10', 10))}
                title="Max articles" className="w-32" />
-        <button type="submit" disabled={loading}>{loading ? 'Creating…' : 'Create planned TechWatch'}</button>
+        <button className="tw-btn" type="submit" disabled={loading}>{loading ? 'Creating…' : 'Create planned TechWatch'}</button>
       </form>
     </section>
   )

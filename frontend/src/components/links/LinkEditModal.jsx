@@ -8,26 +8,9 @@ import Modal from '../common/Modal'
 
 export default function LinkEditModal({ linkId, onRequestClose, onSaved }) {
     const [link, setLink] = React.useState({ id: linkId })
-    const [loading, setLoading] = React.useState(true)
     const [loadError, setLoadError] = React.useState('')
-
-    React.useEffect(() => {
-        let cancelled = false
-        async function load() {
-            setLoading(true)
-            setLoadError('')
-            try {
-                const data = await apiGetLink(linkId)
-                if (!cancelled) setLink(data || { id: linkId })
-            } catch (e) {
-                if (!cancelled) setLoadError(e?.message || 'Failed to load link')
-            } finally {
-                if (!cancelled) setLoading(false)
-            }
-        }
-        if (linkId != null) load()
-        return () => { cancelled = true }
-    }, [linkId])
+    const [invalidateLoading, setInvalidateLoading] = React.useState(false)
+    const [invalidateError, setInvalidateError] = React.useState('')
     const [title, setTitle] = React.useState(link.title || '')
     const [url, setUrl] = React.useState(link.url || '')
     const [desc, setDesc] = React.useState(link.description || '')
@@ -38,13 +21,25 @@ export default function LinkEditModal({ linkId, onRequestClose, onSaved }) {
     const [summarizeLoading, setSummarizeLoading] = React.useState(false)
     const [summarizeError, setSummarizeError] = React.useState('')
     const [inActiveTechWatch, setInActiveTechWatch] = React.useState(false)
-
     const [showContent, setShowContent] = React.useState(false)
 
-    // Ref to the inner fields box (the bordered container)
     const fieldsBoxRef = React.useRef(null)
 
-    // Prefill fields when opening or when link changes
+    React.useEffect(() => {
+        let cancelled = false
+        async function load() {
+            setLoadError('')
+            try {
+                const data = await apiGetLink(linkId)
+                if (!cancelled) setLink(data || { id: linkId })
+            } catch (e) {
+                if (!cancelled) setLoadError(e?.message || 'Failed to load link')
+            }
+        }
+        if (linkId != null) load()
+        return () => { cancelled = true }
+    }, [linkId])
+
     React.useEffect(() => {
         setTitle(link.title || '')
         setUrl(link.url || '')
@@ -55,7 +50,6 @@ export default function LinkEditModal({ linkId, onRequestClose, onSaved }) {
         setAssignedNext(alreadyInNext)
     }, [link && link.id, link && link.title, link && link.url, link && link.description, link && link.summary, link && link.status, link && link.inNextMvt, link && link.inNext, link && link.assignedToNext, link && link.inNextTw, link && link.inNextTW])
 
-    // Load normalized flag from API: is link already in ACTIVE TechWatch?
     React.useEffect(() => {
         let cancelled = false
         async function loadFlag() {
@@ -70,8 +64,7 @@ export default function LinkEditModal({ linkId, onRequestClose, onSaved }) {
         return () => { cancelled = true }
     }, [linkId])
 
-
-    const closeModal = React.useCallback(async () => {
+    React.useCallback(async () => {
         try {
             const payload = {}
             if ((title || '') !== (link.title || '')) payload.title = title
@@ -86,9 +79,8 @@ export default function LinkEditModal({ linkId, onRequestClose, onSaved }) {
         } finally {
             onRequestClose?.()
         }
-    }, [title, url, desc, status, onRequestClose, link.title, link.url, link.description, link.status, link.id])
+    }, [title, url, desc, status, onRequestClose, link.title, link.url, link.description, link.status, link.id]);
 
-    // Save and close helper (used by footer Save button and Ctrl/Cmd+Enter)
     const saveAndClose = React.useCallback(async () => {
         try {
             const payload = {}
@@ -107,7 +99,6 @@ export default function LinkEditModal({ linkId, onRequestClose, onSaved }) {
         }
     }, [title, url, desc, status, onSaved, onRequestClose, link.title, link.url, link.description, link.status, link.id])
 
-    // Keyboard: Save on Ctrl/Cmd+Enter
     React.useEffect(() => {
         const onKey = (e) => {
             if ((e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter') && (e.ctrlKey || e.metaKey)) {
@@ -141,8 +132,6 @@ export default function LinkEditModal({ linkId, onRequestClose, onSaved }) {
         }
     }
 
-    const [invalidateLoading, setInvalidateLoading] = React.useState(false)
-    const [invalidateError, setInvalidateError] = React.useState('')
     const onInvalidate = async () => {
         if (invalidateLoading) return
         setInvalidateError('')
@@ -176,7 +165,7 @@ export default function LinkEditModal({ linkId, onRequestClose, onSaved }) {
         <>
             <Modal
                 isOpen={true}
-                onRequestClose={closeModal}
+                onRequestClose={saveAndClose}
                 title={link?.title}
                 initialSize={{ w: 640, h: 600 }}
                 resizable={true}
@@ -190,6 +179,10 @@ export default function LinkEditModal({ linkId, onRequestClose, onSaved }) {
                 }
             >
                 <div className="p-3 overflow-hidden flex-1 min-h-0 flex flex-col">
+                    {loadError && (
+                        <div className="tw-error" role="alert">{loadError}</div>
+                    )}
+
                     <div className="flex-1 min-h-0 overflow-auto tw-panel p-3" ref={fieldsBoxRef}>
                         <div className="mb-3">
                             <div className="flex items-center justify-between mb-1">

@@ -5,9 +5,9 @@ function TechWatchItem({ item, onOpen, onActivate, onComplete }) {
   return (
     <li className="flex gap-2 items-center py-1">
       <span>#{m.id} — {m.date} — {m.status}</span>
-      <button onClick={() => onOpen && onOpen(m)}>Open</button>
-      <button onClick={() => onActivate && onActivate(m.id)} disabled={m.status === 'ACTIVE'}>Activate</button>
-      <button onClick={() => onComplete && onComplete(m.id)} disabled={m.status === 'COMPLETED'}>Complete</button>
+      <button className="tw-btn tw-btn--sm" onClick={() => onOpen && onOpen(m)}>Open</button>
+      <button className="tw-btn tw-btn--sm" onClick={() => onActivate && onActivate(m.id)} disabled={m.status === 'ACTIVE'}>Activate</button>
+      <button className="tw-btn tw-btn--sm" onClick={() => onComplete && onComplete(m.id)} disabled={m.status === 'COMPLETED'}>Complete</button>
     </li>
   )
 }
