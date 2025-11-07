@@ -7,12 +7,6 @@ allprojects {
     version = "1.0.0-SNAPSHOT"
 }
 
-tasks.register("buildAll") {
-    dependsOn(":backend:build", ":frontend:build", ":browser-extension:build")
-    group = "build"
-    description = "Build all modules (backend, frontend, extension)"
-}
-
 tasks.register("devAll") {
     group = "development"
     description = "Start all modules in development mode"
@@ -24,27 +18,8 @@ tasks.register("devAll") {
     }
 }
 
-
-tasks.register("dev") {
-    dependsOn(":backend:quarkusDev", ":frontend:dev", ":browser-extension:dev")
-}
-
 tasks.register("prodBuild") {
     group = "build"
     description = "Build frontend, copy assets into backend, and produce Quarkus native image including static resources"
-    dependsOn(":frontend:build", ":backend:copyFrontend")
-    doLast {
-        val isWindows = System.getProperty("os.name").lowercase().contains("windows")
-        if (isWindows) {
-            exec {
-                workingDir = rootDir
-                commandLine("cmd", "/c", "gradlew.bat", ":backend:quarkusBuild", "-Dquarkus.package.type=native")
-            }
-        } else {
-            exec {
-                workingDir = rootDir
-                commandLine("./gradlew", ":backend:quarkusBuild", "-Dquarkus.package.type=native")
-            }
-        }
-    }
+    dependsOn(":frontend:build", ":backend:copyFrontend", "backend:quarkusBuild")
 }

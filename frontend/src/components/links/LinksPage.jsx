@@ -17,12 +17,12 @@ export default function LinksPage() {
   const [size, setSize] = useState(10)
   const [total, setTotal] = useState(0)
   const [sort, setSort] = useState('date')
-
+  const [showAll, setShowAll] = useState(true)
 
   const load = async () => {
     setError('')
     try {
-      const { items, total: totalFromHeader } = await listLinks({ status, q: query, page, size, sort })
+      const { items, total: totalFromHeader } = await listLinks({ status, q: query, page, size, sort, withoutTw: !showAll })
       setLinks(items)
       setTotal(typeof totalFromHeader === 'number' ? totalFromHeader : items.length)
     } catch (e) {
@@ -35,7 +35,7 @@ export default function LinksPage() {
   useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, status, page, size, sort])
+  }, [query, status, page, size, sort, showAll])
 
   const remove = async (id) => {
     await apiDeleteLink(id)
@@ -104,6 +104,8 @@ export default function LinksPage() {
               setStatus={setStatus}
               sort={sort}
               setSort={setSort}
+              showAll={showAll}
+              setShowAll={setShowAll}
           />
         </div>
         <div className="ml-auto">

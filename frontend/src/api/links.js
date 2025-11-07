@@ -2,13 +2,14 @@
 
 const BASE = '/api/links'
 
-export async function listLinks({ status, q, page = 0, size = 10, sort = 'date' } = {}) {
+export async function listLinks({ status, q, page = 0, size = 10, sort = 'date', withoutTw = false } = {}) {
   const params = new URLSearchParams()
   if (status) params.set('status', status)
   if (q) params.set('q', q)
   params.set('page', String(page))
   params.set('size', String(size))
   if (sort) params.set('sort', sort)
+  if (withoutTw) params.set('withoutTw', 'true')
   const res = await fetch(`${BASE}?${params.toString()}`)
   const totalCountHeader = res.headers.get('X-Total-Count')
   const total = totalCountHeader ? parseInt(totalCountHeader, 10) : undefined

@@ -42,7 +42,8 @@ public class LinkResource {
                          @QueryParam("q") String q,
                          @QueryParam("page") @DefaultValue("0") int page,
                          @QueryParam("size") @DefaultValue("20") int size,
-                         @QueryParam("sort") @DefaultValue("date") String sortParam) {
+                         @QueryParam("sort") @DefaultValue("date") String sortParam,
+                         @QueryParam("withoutTw") @DefaultValue("false") boolean withoutTw) {
         PanacheQuery<Link> query;
         Sort sort = mapSort(sortParam);
         boolean hasStatus = status != null && !status.isBlank();
@@ -57,7 +58,9 @@ public class LinkResource {
             }
             // Case-insensitive search on title or description
             String like = "%" + q.toLowerCase() + "%";
-            query = repository.find("status = ?1 and (lower(title) like ?2 or lower(description) like ?2)", sort, st, like);
+            String where = "status = ?1 and (lower(title) like ?2 or lower(description) like ?2)";
+            if (withoutTw) where += " and techWatches is empty";
+            query = repository.find(where, sort, st, like);
         } else if (hasStatus) {
             LinkStatus st;
             try {
@@ -65,12 +68,20 @@ public class LinkResource {
             } catch (IllegalArgumentException e) {
                 throw new BadRequestException("Invalid status value");
             }
-            query = repository.find("status = ?1", sort, st);
+            String where = "status = ?1";
+            if (withoutTw) where += " and techWatches is empty";
+            query = repository.find(where, sort, st);
         } else if (hasQuery) {
             String like = "%" + q.toLowerCase() + "%";
-            query = repository.find("lower(title) like ?1 or lower(description) like ?1", sort, like);
+            String where = "(lower(title) like ?1 or lower(description) like ?1)";
+            if (withoutTw) where += " and techWatches is empty";
+            query = repository.find(where, sort, like);
         } else {
-            query = repository.findAll(sort);
+            if (withoutTw) {
+                query = repository.find("techWatches is empty", sort);
+            } else {
+                query = repository.findAll(sort);
+            }
         }
         query.page(Page.of(page, size));
         List<Link> list = query.list();
@@ -268,8 +279,7 @@ public class LinkResource {
         if (link.content == null || link.content.isBlank()) {
             throw new BadRequestException("Le contenu de ce lien n'est pas disponible en base. Veuillez d'abord enregistrer le contenu.");
         }
-        String summary = summarizationService.summarize(link.content);
-        link.summary = summary;
+        link.summary = summarizationService.summarize(link.content);
         return link;
     }
 

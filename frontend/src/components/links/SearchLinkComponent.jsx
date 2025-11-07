@@ -6,8 +6,14 @@ export default function SearchLinkComponent({
   status,
   setStatus,
   sort,
-  setSort
+  setSort,
+  showAll,
+  setShowAll
 }) {
+  const isChecked = !!showAll
+  const message = isChecked ? 'all links' : 'only links without techwatch'
+  const tooltip = isChecked ? 'only links without techwatch' : 'all links'
+
   return (
     <section className="mb-3">
       <div className="tw-searchbar p-2 rounded flex flex-wrap gap-2 items-center">
@@ -22,6 +28,15 @@ export default function SearchLinkComponent({
           <option value="date">Date</option>
           <option value="title">Title</option>
         </select>
+        <label className="flex items-center gap-1 cursor-pointer select-none ml-2" title={tooltip}>
+          <input
+            type="checkbox"
+            className="tw-input w-4 h-4"
+            checked={isChecked}
+            onChange={e => setShowAll(e.target.checked)}
+          />
+          <span className="text-sm opacity-80">{message}</span>
+        </label>
       </div>
     </section>
   )
