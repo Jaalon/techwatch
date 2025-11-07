@@ -15,7 +15,7 @@ import static org.hamcrest.Matchers.*;
 class TechWatchResourceTest {
 
     @Inject
-    org.jaalon.techwatch.TechWatchRepository techWatchRepository;
+    TechWatchRepository techWatchRepository;
 
     @Inject
     LinkRepository linkRepo;
@@ -50,7 +50,7 @@ class TechWatchResourceTest {
                 .post("/api/techwatch")
         .then()
                 .statusCode(201)
-                .body("status", equalTo("PLANNED"))
+                .body("status", equalTo("ACTIVE"))
                 .extract().jsonPath().getLong("id");
 
         given()
@@ -77,15 +77,7 @@ class TechWatchResourceTest {
                 .when().post("/api/techwatch").then().statusCode(201)
                 .extract().jsonPath().getLong("id");
 
-        // No active yet
-        given().when().get("/api/techwatch/active").then().statusCode(204);
-
-        // Activate
-        given().when().post("/api/techwatch/" + id + "/activate")
-                .then().statusCode(200)
-                .body("status", equalTo("ACTIVE"));
-
-        // Active endpoint returns it
+        // Now there is an active one automatically
         given().when().get("/api/techwatch/active")
                 .then().statusCode(200)
                 .body("id", equalTo((int) id));
@@ -108,9 +100,9 @@ class TechWatchResourceTest {
         given().when().post("/api/techwatch/" + id + "/complete")
                 .then().statusCode(200).body("status", equalTo("COMPLETED"));
 
-        // Now we can activate the second
-        given().when().post("/api/techwatch/" + id2 + "/activate")
-                .then().statusCode(200).body("status", equalTo("ACTIVE"));
+        // After completion, the next PLANNED should be auto-activated
+        given().when().get("/api/techwatch/active")
+                .then().statusCode(200).body("id", equalTo((int) id2));
     }
 
     @Test
@@ -119,8 +111,8 @@ class TechWatchResourceTest {
         long techWatchId = given().contentType(ContentType.JSON)
                 .body("{\"date\":\"2025-10-14\"}")
                 .when().post("/api/techwatch").then().statusCode(201)
+                .body("status", equalTo("ACTIVE"))
                 .extract().jsonPath().getLong("id");
-        given().when().post("/api/techwatch/" + techWatchId + "/activate").then().statusCode(200);
 
         // Create two links and set status NEXT_TechWatch
         long l1 = given().contentType(ContentType.JSON)
@@ -157,4 +149,6 @@ class TechWatchResourceTest {
                 .then().statusCode(200)
                 .body("id", hasItems((int) l1, (int) l2));
     }
+
+
 }

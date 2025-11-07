@@ -31,8 +31,8 @@ class TechWatchCapacityTest {
         long id = given().contentType(ContentType.JSON)
                 .body("{\"date\":\"2025-10-14\"}")
                 .when().post("/api/techwatch").then().statusCode(201)
+                .body("status", equalTo("ACTIVE"))
                 .extract().jsonPath().getLong("id");
-        given().when().post("/api/techwatch/" + id + "/activate").then().statusCode(200);
 
         // Create 12 links and set NEXT_TECHWATCH
         for (int i = 0; i < 12; i++) {

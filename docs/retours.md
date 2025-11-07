@@ -8,8 +8,7 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ## Bugs
 
-* Lorsqu’on crée un techwatch, si aucun techwatch est actif, celui-ci est activé automatiquement.
-* Lorsqu’on ferme une techwatch, on active la techwatch suivante par ordre de date, ou on en crée une active la semaine suivante.
+* quarkus dev devrait lancer le backend d’un côté et le frontend de l’autre. techwatch.properties ne devrait être créé que pour le mode prod (pas le mode dev).
 
 ## Déploiement
 
@@ -18,6 +17,10 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 ## Link list
 
 * Critère de recherche : N’afficher que les articles sans mvt
+
+## Techwatch
+
+* Modifier une techwatch : changer la date, le nombre d’articles max, son status, possibilité de supprimer une techwatch
 
 # Pour plus tard
 
