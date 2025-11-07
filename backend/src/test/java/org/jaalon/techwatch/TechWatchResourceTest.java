@@ -2,6 +2,8 @@ package org.jaalon.techwatch;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.jaalon.links.LinkRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,14 +14,14 @@ import static org.hamcrest.Matchers.*;
 @QuarkusTest
 class TechWatchResourceTest {
 
-    @jakarta.inject.Inject
+    @Inject
     org.jaalon.techwatch.TechWatchRepository techWatchRepository;
 
-    @jakarta.inject.Inject
+    @Inject
     LinkRepository linkRepo;
 
     @BeforeEach
-    @jakarta.transaction.Transactional
+    @Transactional
     void clean() {
         // order matters due to FKs if any; here we just clear both
         linkRepo.deleteAll();

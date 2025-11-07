@@ -11,9 +11,13 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 * Lorsqu’on crée un techwatch, si aucun techwatch est actif, celui-ci est activé automatiquement.
 * Lorsqu’on ferme une techwatch, on active la techwatch suivante par ordre de date, ou on en crée une active la semaine suivante.
 
-# Link list
+## Déploiement
 
-* N’afficher que les articles sans mvt
+* Faire de la techwatch un service windows avec une icône dans le tray. Si on clique sur ce service, ça ouvre automatiquement la page du service dans le navigateur.
+
+## Link list
+
+* Critère de recherche : N’afficher que les articles sans mvt
 
 # Pour plus tard
 
@@ -64,6 +68,10 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 * Settings:
     * revoir la présentation des llms, afficher juste le nom
 
-# Bugs
+## Déploiement
+
+* Avoir la possibilité d’installer l’extension navigateur depuis le frontend
+
+## Bugs
 
 * Certaines catégories ne semblent pas être fixe. Peut-être lorsqu’un article est ajouté à une mvt, à fouiller (ex: Article 1 qui oscille entre DevSecOps et IA)

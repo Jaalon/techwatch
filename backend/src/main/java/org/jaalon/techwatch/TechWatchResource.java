@@ -58,7 +58,6 @@ public class TechWatchResource {
         m.status = dto.status != null ? dto.status : TechWatchStatus.PLANNED;
         m.maxArticles = (dto.maxArticles != null && dto.maxArticles > 0) ? dto.maxArticles : 10;
         if (m.status == TechWatchStatus.ACTIVE) {
-            // enforce single active
             long active = techWatchRepository.count("status = ?1", TechWatchStatus.ACTIVE);
             if (active > 0) throw new ClientErrorException("An active TechWatch already exists", 409);
         }

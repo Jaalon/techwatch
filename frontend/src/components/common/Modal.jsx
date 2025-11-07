@@ -165,7 +165,6 @@ export default function Modal({
 
     return createPortal(
         <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
-            {/* Backdrop matches the LLM add component */}
             <div className="absolute inset-0 tw-modal-backdrop" onClick={closeModal} />
 
             {/* Window */}
