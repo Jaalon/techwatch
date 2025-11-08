@@ -52,13 +52,13 @@ val downloadWinSW by tasks.registering {
 // Packages the application distribution zip
 tasks.register<Zip>("package") {
     group = "package"
-    description = "Runs prodBuild, downloads WinSW and creates techwtch-<version>.zip with required files"
+    description = "Runs prodBuild, downloads WinSW and creates techwatch-<version>.zip with required files"
 
     dependsOn("prodBuild", downloadWinSW)
 
     // Output archive name and location
     val ver = project.version.toString()
-    archiveFileName.set("techwtch-${ver}.zip")
+    archiveFileName.set("techwatch-${ver}.zip")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
 
     // Paths

@@ -91,19 +91,7 @@ public class TechWatchResource {
         TechWatch m = techWatchRepository.findById(id);
         if (m == null) throw new NotFoundException();
         m.status = TechWatchStatus.COMPLETED;
-        // After completion, promote the next PLANNED in the future to ACTIVE.
-        TechWatch next = techWatchRepository.find("status = ?1 and date > ?2 order by date", TechWatchStatus.PLANNED, m.date)
-                .firstResult();
-        if (next != null) {
-            next.status = TechWatchStatus.ACTIVE;
-        } else {
-            // No future planned: create a new one at +1 week and set ACTIVE
-            TechWatch created = new TechWatch();
-            created.date = m.date != null ? m.date.plusDays(7) : java.time.LocalDate.now().plusDays(7);
-            created.status = TechWatchStatus.ACTIVE;
-            created.maxArticles = 10;
-            techWatchRepository.persist(created);
-        }
+        promoteNextOrCreate(m);
         return m;
     }
 
@@ -135,5 +123,67 @@ public class TechWatchResource {
         if (m == null) throw new NotFoundException();
         techWatchService.removeLinkFromTechWatch(id, linkId);
         return Response.noContent().build();
+    }
+
+    @PUT
+    @Path("/{id}")
+    @Transactional
+    public TechWatch update(@PathParam("id") Long id, UpdateTechWatchDTO dto) {
+        TechWatch m = techWatchRepository.findById(id);
+        if (m == null) throw new NotFoundException();
+        if (dto == null) return m;
+
+        TechWatchStatus prevStatus = m.status;
+
+        // Handle date change with uniqueness check
+        if (dto.date() != null && !dto.date().equals(m.date)) {
+            TechWatch existing = techWatchRepository.find("date = ?1", dto.date()).firstResult();
+            if (existing != null && !existing.id.equals(m.id)) {
+                throw new ClientErrorException("A TechWatch already exists for the selected date", 409);
+            }
+            m.date = dto.date();
+        }
+
+        if (dto.maxArticles() != null) {
+            if (dto.maxArticles() <= 0) throw new BadRequestException("maxArticles must be > 0");
+            m.maxArticles = dto.maxArticles();
+        }
+        if (dto.status() != null) {
+            TechWatchStatus newStatus = dto.status();
+            if (newStatus == TechWatchStatus.ACTIVE) {
+                if (m.date == null) throw new BadRequestException("date is required to activate");
+                TechWatch currentActive = techWatchRepository.find("status = ?1", TechWatchStatus.ACTIVE).firstResult();
+                if (currentActive != null && !currentActive.id.equals(m.id)) {
+                    // Demote the previously ACTIVE to PLANNED
+                    currentActive.status = TechWatchStatus.PLANNED;
+                }
+                m.status = TechWatchStatus.ACTIVE;
+            } else {
+                m.status = newStatus;
+            }
+        }
+
+        // Business rule: when an ACTIVE TechWatch is changed to a non-ACTIVE status,
+        // the next one by date becomes ACTIVE; if none exists, create one at +7 days.
+        if (prevStatus == TechWatchStatus.ACTIVE && m.status != TechWatchStatus.ACTIVE) {
+            promoteNextOrCreate(m);
+        }
+        return m;
+    }
+
+    private void promoteNextOrCreate(TechWatch reference) {
+        // Promote the next PLANNED with a later date to ACTIVE, otherwise create a new one at +7 days
+        TechWatch next = techWatchRepository
+                .find("status = ?1 and date > ?2 order by date", TechWatchStatus.PLANNED, reference.date)
+                .firstResult();
+        if (next != null) {
+            next.status = TechWatchStatus.ACTIVE;
+        } else {
+            TechWatch created = new TechWatch();
+            created.date = reference.date != null ? reference.date.plusDays(7) : java.time.LocalDate.now().plusDays(7);
+            created.status = TechWatchStatus.ACTIVE;
+            created.maxArticles = 10;
+            techWatchRepository.persist(created);
+        }
     }
 }

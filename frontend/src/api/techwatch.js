@@ -55,3 +55,13 @@ export async function removeLinkFromTechWatch(twId, linkId) {
   const res = await fetch(`${BASE}/${twId}/links/${linkId}`, { method: 'DELETE' })
   if (!res.ok && res.status !== 204) throw new Error(await res.text().catch(() => ''))
 }
+
+export async function updateTechWatch(id, payload) {
+  const res = await fetch(`${BASE}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload || {})
+  })
+  if (!res.ok) throw new Error(await res.text().catch(() => ''))
+  return await res.json()
+}

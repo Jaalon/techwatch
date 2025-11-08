@@ -10,13 +10,10 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ## Link list
 
-* Critère de recherche : N’afficher que les articles sans mvt
-
 ## Techwatch
 
-* Modifier une techwatch : changer la date, le nombre d’articles max, son status, possibilité de supprimer une techwatch
-
-# Pour plus tard
+* Pagination sur la liste des techwatch (recent tech watch) 
+* Possibilité de supprimer une techwatch
 
 ## Workflow
 
@@ -27,7 +24,9 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ## Fonctionnalités
 
-* Tri par articles qui se sont pas dans une mvt
+* Importer les techwatch depuis une page wiki (confluence)
+* Importer les techwatch depuis une page Notion
+* Importer/Exporter la base de données
 
 ## IA configuration
 
