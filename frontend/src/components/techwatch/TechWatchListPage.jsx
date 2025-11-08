@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import TechWatchListComponent from './TechWatchListComponent'
+import TechWatchList from './TechWatchList'
 import NewTechWatchComponent from './NewTechWatchComponent'
 import TechWatchComponent from './TechWatchComponent'
-import { listTechWatches as apiListTechWatches, activateTechWatch as apiActivateTechWatch, completeTechWatch as apiCompleteTechWatch, updateTechWatch as apiUpdateTechWatch } from '../../api/techwatch'
+import { listTechWatches as apiListTechWatches, updateTechWatch as apiUpdateTechWatch } from '../../api/techwatch'
 import PageHeader from "../general/PageHeader.jsx";
 import Modal from "../common/Modal.jsx";
 
@@ -61,16 +61,6 @@ export default function TechWatchListPage() {
         loadTechWatches()
     }, [])
 
-    const activateTechWatch = async (id) => {
-        await apiActivateTechWatch(id)
-        await loadTechWatches()
-    }
-
-    const completeTechWatch = async (id) => {
-        await apiCompleteTechWatch(id)
-        await loadTechWatches()
-    }
-
     const openTechWatchDetails = (tw) => {
         setOpenedTechWatch(prev => (prev && prev.id === tw.id) ? null : tw)
     }
@@ -81,11 +71,9 @@ export default function TechWatchListPage() {
 
             <NewTechWatchComponent onCreated={loadTechWatches} />
 
-            <TechWatchListComponent
+            <TechWatchList
                 items={techWatches}
                 onOpen={openTechWatchDetails}
-                onActivate={activateTechWatch}
-                onComplete={completeTechWatch}
             />
 
             {openedTechWatch && (

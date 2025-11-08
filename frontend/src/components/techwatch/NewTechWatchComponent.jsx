@@ -28,14 +28,14 @@ export default function NewTechWatchComponent({ onCreated }) {
   }
 
   return (
-    <section className="border border-gray-300 p-4 mb-4 rounded">
+    <section className="mb-3 tw-searchbar p-2 rounded">
       <h3 className="mt-0">New TechWatch</h3>
-      {error && <div className="error mb-2">{error}</div>}
-      <form onSubmit={submit} className="flex gap-2 flex-wrap items-center mb-3">
-        <input type="date" value={date} onChange={e => setDate(e.target.value)} />
-        <input type="number" min={1} max={100} value={maxArticles}
+      {error && <div className="text-red-600 text-sm mb-2">{error}</div>}
+      <form onSubmit={submit} className="flex gap-2 flex-wrap items-center">
+        <input className="tw-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
+        <input className="tw-input w-32" type="number" min={1} max={100} value={maxArticles}
                onChange={e => setMaxArticles(parseInt(e.target.value || '10', 10))}
-               title="Max articles" className="w-32" />
+               title="Max articles" />
         <button className="tw-btn" type="submit" disabled={loading}>{loading ? 'Creating…' : 'Create planned TechWatch'}</button>
       </form>
     </section>
