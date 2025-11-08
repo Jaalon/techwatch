@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react'
 import TechWatchList from './TechWatchList'
 import NewTechWatchComponent from './NewTechWatchComponent'
 import TechWatchComponent from './TechWatchComponent'
-import { listTechWatches as apiListTechWatches, updateTechWatch as apiUpdateTechWatch } from '../../api/techwatch'
+import { listTechWatches as apiListTechWatches, updateTechWatch as apiUpdateTechWatch, deleteTechWatch as apiDeleteTechWatch } from '../../api/techwatch'
 import PageHeader from "../general/PageHeader.jsx";
 import Modal from "../common/Modal.jsx";
+import TechWatchFooter from "./TechWatchFooter.jsx";
 
 export default function TechWatchListPage() {
     const formatFrenchDate = (dateStr) => {
@@ -83,6 +84,21 @@ export default function TechWatchListPage() {
                     title={`Minute veille techno du ${formatFrenchDate(openedTechWatch?.date)}`}
                     initialPosition={{ x: 120, y: 80 }}
                     initialSize={{ w: 960, h: 640 }}
+                    footerContent={
+                        <TechWatchFooter
+                            onDelete={async () => {
+                                try {
+                                    await apiDeleteTechWatch(openedTechWatch.id)
+                                } catch (e) {
+                                    console.error(e)
+                                } finally {
+                                    setOpenedTechWatch(null)
+                                    loadTechWatches()
+                                }
+                            }}
+                            onClose={() => setOpenedTechWatch(null)}
+                        />
+                    }
                 >
                     <div className="tw-panel p-3 -mt-3 h-full overflow-auto">
                         <div className="flex items-center justify-between mb-3">

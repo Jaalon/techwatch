@@ -172,7 +172,7 @@ export default function LinkEditModal({ linkId, onRequestClose, onSaved }) {
                 draggable={true}
                 footerContent={
                     <LinkEditFooter
-                        onDelete={async () => { try { await apiDeleteLink(link.id) } catch (e) { console.error(e) } finally { onRequestClose?.() } }}
+                        onDelete={async () => { try { await apiDeleteLink(link.id) } catch (e) { console.error(e) } finally { try { onSaved && onSaved() } catch {} onRequestClose?.() } }}
                         onCancel={() => onRequestClose?.()}
                         onSave={saveAndClose}
                     />

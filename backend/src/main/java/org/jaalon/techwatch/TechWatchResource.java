@@ -171,6 +171,21 @@ public class TechWatchResource {
         return m;
     }
 
+    @DELETE
+    @Path("/{id}")
+    @Transactional
+    public Response delete(@PathParam("id") Long id) {
+        TechWatch reference = techWatchRepository.findById(id);
+        if (reference == null) throw new NotFoundException();
+        boolean wasActive = reference.status == TechWatchStatus.ACTIVE;
+        // Keep reference data (date) before deletion for creation logic
+        techWatchRepository.delete(reference);
+        if (wasActive) {
+            promoteNextOrCreate(reference);
+        }
+        return Response.noContent().build();
+    }
+
     private void promoteNextOrCreate(TechWatch reference) {
         // Promote the next PLANNED with a later date to ACTIVE, otherwise create a new one at +7 days
         TechWatch next = techWatchRepository

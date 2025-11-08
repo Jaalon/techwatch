@@ -65,3 +65,10 @@ export async function updateTechWatch(id, payload) {
   if (!res.ok) throw new Error(await res.text().catch(() => ''))
   return await res.json()
 }
+
+export async function deleteTechWatch(id) {
+  const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' })
+  if (!res.ok && res.status !== 204) {
+    throw new Error(await res.text().catch(() => ''))
+  }
+}

@@ -12,9 +12,6 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ## Techwatch
 
-* Pagination sur la liste des techwatch (recent tech watch) 
-* Possibilité de supprimer une techwatch
-
 ## Workflow
 
 * Revoir le workflow de collecte de liens, ajout à mvt, publication mvt
