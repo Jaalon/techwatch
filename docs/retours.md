@@ -6,13 +6,7 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ---
 
-## Bugs
-
-* quarkus dev devrait lancer le backend d’un côté et le frontend de l’autre. techwatch.properties ne devrait être créé que pour le mode prod (pas le mode dev).
-
 ## Déploiement
-
-* Faire de la techwatch un service windows avec une icône dans le tray. Si on clique sur ce service, ça ouvre automatiquement la page du service dans le navigateur.
 
 ## Link list
 
@@ -78,3 +72,7 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 ## Bugs
 
 * Certaines catégories ne semblent pas être fixe. Peut-être lorsqu’un article est ajouté à une mvt, à fouiller (ex: Article 1 qui oscille entre DevSecOps et IA)
+
+## Environnement de dev
+
+* quarkus dev devrait lancer le backend d’un côté et le frontend de l’autre. techwatch.properties ne devrait être créé que pour le mode prod (pas le mode dev).
