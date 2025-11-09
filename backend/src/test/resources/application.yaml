@@ -1,9 +1,6 @@
 quarkus:
-  http:
-  hibernate-orm:
-    database:
-      generation: drop-and-create
-    dialect: org.hibernate.dialect.H2Dialect
+  liquibase:
+    migrate-at-start: true
   datasource:
     db-kind: h2
     jdbc:
