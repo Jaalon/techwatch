@@ -1,11 +1,11 @@
 package org.jaalon.llm;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.jaalon.apikey.AiApiKey;
+
 import java.time.Instant;
 
 @Entity
@@ -15,14 +15,9 @@ public class LlmConfig extends PanacheEntity {
     @Size(max = 150)
     public String name;
 
-    @NotBlank
-    @Size(max = 500)
-    public String baseUrl;
-
-    @NotBlank
-    @Size(max = 200)
-    @JsonIgnore // do not expose apiKey in JSON responses of the entity
-    public String apiKey;
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    @JoinColumn(name = "ai_api_key_id", nullable = false)
+    public AiApiKey aiApiKey;
 
     @NotBlank
     @Size(max = 200)

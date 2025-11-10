@@ -1,13 +1,15 @@
 import React from 'react'
-import IAProviderSettingsComponent from './IAProviderSettingsComponent'
+import IAModelSettingsComponent from './IAModelSettingsComponent.jsx'
 import PromptDirectivesComponent from './PromptDirectivesComponent'
 import PageHeader from '../general/PageHeader'
+import AiApiKeysSection from './AiApiKeysSection.jsx'
 
 export default function SettingsPage() {
   return (
     <div className="tw-panel p-3 -mt-3">
       <PageHeader title="Settings" />
-      <IAProviderSettingsComponent />
+      <AiApiKeysSection />
+      <IAModelSettingsComponent />
       <PromptDirectivesComponent />
     </div>
   )

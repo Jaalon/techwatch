@@ -3,8 +3,10 @@ package org.jaalon.llm;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import org.jaalon.apikey.AiApiKeyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -15,17 +17,27 @@ class LlmResourceTest {
     @Inject
     LlmConfigRepository repo;
 
+    @Inject
+    AiApiKeyRepository keyRepo;
+
     @BeforeEach
     @jakarta.transaction.Transactional
     void clean() {
         repo.deleteAll();
+        keyRepo.deleteAll();
     }
 
     @Test
     void modelsAreFetchedViaBackend_withMockedPerplexity() {
+        // Create a temporary API key to resolve credentials server-side
+        long keyId = given().contentType(ContentType.JSON)
+                .body("{\"provider\":\"perplexity\",\"name\":\"Tmp\",\"baseUrl\":\"https://api.perplexity.ai\",\"apiKey\":\"secret\"}")
+            .when().post("/api/ai-keys")
+            .then().statusCode(201)
+            .extract().jsonPath().getLong("id");
+
         given()
-                .queryParam("baseUrl", "https://api.perplexity.ai")
-                .queryParam("apiKey", "secret")
+                .queryParam("aiApiKeyId", keyId)
         .when()
                 .get("/api/llm/models")
         .then()
@@ -37,9 +49,16 @@ class LlmResourceTest {
 
     @Test
     void createConfig_requiresModel_andFirstBecomesDefault_thenSwitchDefault() {
+        // Prepare a key
+        long keyId = given().contentType(ContentType.JSON)
+                .body("{\"provider\":\"perplexity\",\"name\":\"Key\",\"baseUrl\":\"https://api.perplexity.ai\",\"apiKey\":\"k\"}")
+            .when().post("/api/ai-keys")
+            .then().statusCode(201)
+            .extract().jsonPath().getLong("id");
+
         // Missing model -> 400
         given().contentType(ContentType.JSON)
-                .body("{\"name\":\"Cfg A\",\"baseUrl\":\"https://api.perplexity.ai\",\"apiKey\":\"k\"}")
+                .body(Map.of("name", "Cfg A", "aiApiKeyId", keyId))
         .when()
                 .post("/api/llm/configs")
         .then()
@@ -47,7 +66,7 @@ class LlmResourceTest {
 
         // Create first
         long id1 = given().contentType(ContentType.JSON)
-                .body("{\"name\":\"Cfg A\",\"baseUrl\":\"https://api.perplexity.ai\",\"apiKey\":\"k\",\"model\":\"pplx-70b\"}")
+                .body(Map.of("name", "Cfg A", "aiApiKeyId", keyId, "model", "pplx-70b"))
         .when()
                 .post("/api/llm/configs")
         .then()
@@ -57,7 +76,7 @@ class LlmResourceTest {
 
         // Create second -> not default
         long id2 = given().contentType(ContentType.JSON)
-                .body("{\"name\":\"Cfg B\",\"baseUrl\":\"https://api.perplexity.ai\",\"apiKey\":\"k\",\"model\":\"pplx-8x7b\"}")
+                .body(Map.of("name", "Cfg B", "aiApiKeyId", keyId, "model", "pplx-8x7b"))
         .when()
                 .post("/api/llm/configs")
         .then()

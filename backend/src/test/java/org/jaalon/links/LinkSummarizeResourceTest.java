@@ -5,11 +5,11 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.jaalon.apikey.AiApiKey;
+import org.jaalon.apikey.AiApiKeyRepository;
 import org.jaalon.config.PromptInstruction;
 import org.jaalon.config.PromptInstructionRepository;
-import org.jaalon.llm.LlmClient;
-import org.jaalon.llm.LlmConfig;
-import org.jaalon.llm.LlmConfigRepository;
+import org.jaalon.llm.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -27,6 +27,9 @@ public class LinkSummarizeResourceTest {
     LlmConfigRepository llmConfigRepository;
 
     @Inject
+    AiApiKeyRepository aiApiKeyRepository;
+
+    @Inject
     PromptInstructionRepository instructionRepository;
 
     @InjectMock
@@ -39,11 +42,18 @@ public class LinkSummarizeResourceTest {
         linkRepository.deleteAll();
         llmConfigRepository.deleteAll();
         instructionRepository.deleteAll();
-        // Insert default LLM config
+        aiApiKeyRepository.deleteAll();
+        // Create an API key and default LLM config
+        AiApiKey key = new AiApiKey();
+        key.provider = "perplexity";
+        key.name = "Local";
+        key.baseUrl = "http://localhost:9999";
+        key.apiKey = "key";
+        aiApiKeyRepository.persist(key);
+
         LlmConfig cfg = new LlmConfig();
         cfg.name = "test";
-        cfg.baseUrl = "http://localhost:9999";
-        cfg.apiKey = "key";
+        cfg.aiApiKey = key;
         cfg.model = "model-x";
         cfg.isDefault = true;
         llmConfigRepository.persist(cfg);

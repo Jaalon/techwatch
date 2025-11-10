@@ -1,6 +1,5 @@
 package org.jaalon.links;
 
-import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jaalon.config.PromptInstruction;
@@ -26,33 +25,31 @@ public class SummarizationService {
     LlmClient llmClient;
 
     public String summarize(String content) {
-        Log.info("Starting summarization from stored content. Length=" + (content == null ? 0 : content.length()));
-
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("content is required");
         }
-        // Find default LLM config
-        Optional<LlmConfig> cfgOpt = llmConfigRepository.find("isDefault = true").firstResultOptional();
-        LlmConfig cfg = cfgOpt.orElseThrow(() -> new IllegalStateException("No default LLM configuration found"));
-        // Load summarize instruction
-        PromptInstruction pi = instructionRepository.findById(TYPE_SUMMARIZE);
-        if (pi == null || pi.content == null || pi.content.isBlank()) {
+
+        Optional<LlmConfig> optionalLlmConfig = llmConfigRepository.find("isDefault = true").firstResultOptional();
+        LlmConfig llmConfig = optionalLlmConfig.orElseThrow(() -> new IllegalStateException("No default LLM configuration found"));
+
+        PromptInstruction promptInstruction = instructionRepository.findById(TYPE_SUMMARIZE);
+
+        if (promptInstruction == null || promptInstruction.content == null || promptInstruction.content.isBlank()) {
             throw new IllegalStateException("Summarize instruction not found");
         }
-        Log.info("Loaded instruction: " + pi.content );
 
-        String prompt = pi.content.trim() + "\n\n" + content.trim();
+        String prompt = promptInstruction.content.trim() + "\n\n" + content.trim();
 
-        Log.info("Prompt built with content length: " + content.length());
+        if (llmConfig.aiApiKey == null) {
+            throw new IllegalStateException("LLM configuration has no associated API key");
+        }
 
-        String out = llmClient.generate(cfg.baseUrl, cfg.apiKey, cfg.model, prompt);
+        String summarizationResult = llmClient.generate(llmConfig.aiApiKey.baseUrl, llmConfig.aiApiKey.apiKey, llmConfig.model, prompt);
 
-        Log.info("LLM out: " + out );
-
-        if (out == null || out.isBlank()) {
+        if (summarizationResult == null || summarizationResult.isBlank()) {
             throw new IllegalStateException("Empty response from LLM");
         }
-        // Ensure human readable text (normalize line endings and trim)
-        return out.replaceAll("\r\n?", "\n").trim();
+
+        return summarizationResult.replaceAll("\r\n?", "\n").trim();
     }
 }

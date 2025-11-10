@@ -1,27 +1,32 @@
 import React, { useEffect, useState } from 'react'
 import { listConfigs as apiListConfigs, setDefaultConfig as apiSetDefaultConfig, deleteConfig as apiDeleteConfig } from '../../api/llm'
+import { listKeys as apiListKeys } from '../../api/aikeys'
 import AddPerplexityProviderModal from './AddPerplexityProviderModal.jsx'
 import AddDockerProviderModal from './AddDockerProviderModal.jsx'
 import AddSelfManagedProviderModal from './AddSelfManagedProviderModal.jsx'
 import AddOpenAiProviderModal from './AddOpenAiProviderModal.jsx'
 import AddMistralProviderModal from './AddMistralProviderModal.jsx'
 import DeleteConfirmModal from '../common/DeleteConfirmModal.jsx'
+import AddModelModal from './AddModelModal.jsx'
 
-export default function IAProviderSettingsComponent() {
+export default function IAModelSettingsComponent() {
   const [isOpen, setIsOpen] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [showAddModelModal, setShowAddModelModal] = useState(false)
   const [provider, setProvider] = useState('perplexity')
   const [initialValues, setInitialValues] = useState(null)
 
   const [configs, setConfigs] = useState([])
+
+  // AI Keys handling
+  const [keys, setKeys] = useState([])
+  const [selectedKeyId, setSelectedKeyId] = useState('')
 
   // Delete modal state
   const [showDelete, setShowDelete] = useState(false)
   const [toDelete, setToDelete] = useState({ id: null, name: '' })
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
-
-  const resetForm = () => {}
 
   const loadConfigs = async () => {
     try {
@@ -33,9 +38,33 @@ export default function IAProviderSettingsComponent() {
     }
   }
 
-  useEffect(() => { loadConfigs() }, [])
+  const loadKeys = async () => {
+    try {
+      const data = await apiListKeys()
+      const arr = Array.isArray(data) ? data : []
+      setKeys(arr)
+      // if none selected, preselect first
+      if (!selectedKeyId && arr.length > 0) {
+        setSelectedKeyId(String(arr[0].id))
+        setProvider(arr[0].provider || 'perplexity')
+      }
+    } catch (e) {
+      console.error(e)
+      setKeys([])
+    } finally {
+    }
+  }
 
-  const openModal = () => { resetForm(); setInitialValues(null); setShowModal(true) }
+  useEffect(() => { loadConfigs(); loadKeys() }, [])
+
+  // Refresh keys list when a new API key is created/updated elsewhere (e.g., AddProviderKeyModal)
+  useEffect(() => {
+    const onKeysChanged = () => { loadKeys() }
+    window.addEventListener('ai-api-keys:changed', onKeysChanged)
+    return () => { window.removeEventListener('ai-api-keys:changed', onKeysChanged) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const closeModal = () => { setShowModal(false); setInitialValues(null) }
 
   const setDefault = async (id) => {
@@ -76,24 +105,31 @@ export default function IAProviderSettingsComponent() {
   }
 
   const inferProviderFromConfig = (c) => {
-    const url = String(c?.baseUrl || '').toLowerCase()
+    const key = keys.find(k => String(k.id) === String(c?.aiApiKeyId))
+    if (key?.provider) return String(key.provider).toLowerCase()
     const model = String(c?.model || '').toLowerCase()
-    if (url.includes('perplexity.ai')) return 'perplexity'
-    if (url.includes('mistral.ai')) return 'mistral'
-    if (url.includes('openai.com')) return 'openai'
-    // Heuristics for local/docker
-    if (url.includes('localhost') || url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('host.docker.internal') || url.includes('docker')) return 'docker'
-    // As a fallback, try to guess from model id prefixes
     if (model.startsWith('sonar')) return 'perplexity'
     if (model.startsWith('mistral')) return 'mistral'
     return provider // fallback to current selection
+  }
+
+  // Find the API key name matching this config by id
+  const findKeyNameForConfig = (c) => {
+    try {
+      const match = keys.find(k => String(k.id) === String(c?.aiApiKeyId))
+      return match?.name || ''
+    } catch {
+      return ''
+    }
   }
 
   const handleConfigDoubleClick = (c) => {
     if (!c) return
     const inferred = inferProviderFromConfig(c)
     setProvider(inferred)
-    const iv = { id: c.id, name: c.name, baseUrl: c.baseUrl, apiKey: c.apiKey, model: c.model }
+    // preselect the API key used by this config
+    if (c.aiApiKeyId) setSelectedKeyId(String(c.aiApiKeyId))
+    const iv = { id: c.id, name: c.name, model: c.model }
     setInitialValues(iv)
     setShowModal(true)
   }
@@ -127,15 +163,7 @@ export default function IAProviderSettingsComponent() {
 
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center gap-2">
-              <label className="text-sm tw-text-muted" htmlFor="provider-select">Type</label>
-              <select id="provider-select" className="tw-select" value={provider} onChange={e => setProvider(e.target.value)}>
-                <option value="docker">Docker</option>
-                <option value="self-managed">Self-Managed</option>
-                <option value="openai">OpenAI</option>
-                <option value="perplexity">Perplexity</option>
-                <option value="mistral">Mistral</option>
-              </select>
-              <button onClick={openModal} className="tw-btn tw-btn--sm">Add LLM</button>
+              <button onClick={() => setShowAddModelModal(true)} className="tw-btn tw-btn--sm">Add LLM</button>
             </div>
           </div>
 
@@ -145,7 +173,7 @@ export default function IAProviderSettingsComponent() {
                 <li key={c.id} className="flex items-center gap-3 tw-panel p-2" onDoubleClick={() => handleConfigDoubleClick(c)} title="Double-cliquer pour modifier/dupliquer">
                   <div className="flex-1">
                     <div className="font-medium">{c.name} {c.isDefault && <span className="ml-2 text-xs text-green-600">(default)</span>}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">{c.model} • {c.baseUrl}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">{findKeyNameForConfig(c) || '\u00A0'}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -170,12 +198,26 @@ export default function IAProviderSettingsComponent() {
         </div>
       )}
 
+      {/* Unified Add Model modal */}
+      {showAddModelModal && (
+        <AddModelModal
+          isOpen={showAddModelModal}
+          onRequestClose={() => setShowAddModelModal(false)}
+          onSaved={loadConfigs}
+          keys={keys}
+        />
+      )}
+
+      {/* Edit/duplicate flow (double-click) keeps provider-specific modals for now */}
       {showModal && provider === 'perplexity' && (
         <AddPerplexityProviderModal
           isOpen={showModal}
           onRequestClose={closeModal}
           onSaved={loadConfigs}
           initialValues={initialValues}
+          selectedKeyId={selectedKeyId}
+          selectedKeyName={(keys.find(k => String(k.id) === String(selectedKeyId))?.name) || ''}
+          keys={keys}
         />
       )}
       {showModal && provider === 'docker' && (
@@ -205,6 +247,9 @@ export default function IAProviderSettingsComponent() {
           onRequestClose={closeModal}
           onSaved={loadConfigs}
           initialValues={initialValues}
+          selectedKeyId={selectedKeyId}
+          selectedKeyName={(keys.find(k => String(k.id) === String(selectedKeyId))?.name) || ''}
+          keys={keys}
         />
       )}
 

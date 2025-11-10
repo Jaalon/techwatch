@@ -311,3 +311,112 @@ databaseChangeLog:
                   name: updatedAt
                   type: TIMESTAMP
                   defaultValueComputed: CURRENT_TIMESTAMP
+
+  - changeSet:
+      id: 11-ai-api-keys
+      author: junie
+      changes:
+        - createTable:
+            tableName: AiApiKey
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: provider
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: baseUrl
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: apiKey
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: organizationId
+                  type: VARCHAR(100)
+              - column:
+                  name: projectId
+                  type: VARCHAR(100)
+              - column:
+                  name: createdAt
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addAutoIncrement:
+            tableName: AiApiKey
+            columnName: id
+            columnDataType: BIGINT
+        - createSequence:
+            sequenceName: AiApiKey_SEQ
+            startValue: 1
+            incrementBy: 50
+        - createIndex:
+            tableName: AiApiKey
+            indexName: idx_aikey_provider
+            columns:
+              - column:
+                  name: provider
+
+  - changeSet:
+      id: 12-llm-config-use-ai-key
+      author: junie
+      changes:
+        - addColumn:
+            tableName: LlmConfig
+            columns:
+              - column:
+                  name: ai_api_key_id
+                  type: BIGINT
+        - sql:
+            comment: "Link existing LlmConfig rows to matching AiApiKey by baseUrl/apiKey if present"
+            sql: |
+              UPDATE LlmConfig SET ai_api_key_id = (
+                SELECT MIN(k.id) FROM AiApiKey k
+                WHERE k.baseUrl = LlmConfig.baseUrl AND k.apiKey = LlmConfig.apiKey
+              );
+        - sql:
+            comment: "Insert missing AiApiKey rows for LlmConfig entries without a match"
+            sql: |
+              INSERT INTO AiApiKey (provider, name, baseUrl, apiKey, createdAt)
+              SELECT 'unknown', 'Imported ' || COALESCE(name, 'Key'), baseUrl, apiKey, CURRENT_TIMESTAMP
+              FROM LlmConfig
+              WHERE ai_api_key_id IS NULL;
+        - sql:
+            comment: "Assign ai_api_key_id after inserts"
+            sql: |
+              UPDATE LlmConfig SET ai_api_key_id = (
+                SELECT MIN(k.id) FROM AiApiKey k
+                WHERE k.baseUrl = LlmConfig.baseUrl AND k.apiKey = LlmConfig.apiKey
+              )
+              WHERE ai_api_key_id IS NULL;
+        - addForeignKeyConstraint:
+            baseTableName: LlmConfig
+            baseColumnNames: ai_api_key_id
+            constraintName: fk_llmconfig_aikey
+            referencedTableName: AiApiKey
+            referencedColumnNames: id
+            onDelete: RESTRICT
+        - addNotNullConstraint:
+            tableName: LlmConfig
+            columnName: ai_api_key_id
+            columnDataType: BIGINT
+        - dropColumn:
+            tableName: LlmConfig
+            columnName: baseUrl
+        - dropColumn:
+            tableName: LlmConfig
+            columnName: apiKey

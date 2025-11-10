@@ -115,8 +115,28 @@ Build
   - Frontend: functional React components; keep to Vite defaults and existing file conventions.
 - Minimal changes: prefer targeted edits and focused test runs to keep feedback loop fast on Windows.
 
-6) Verified Example (created and removed during this update)
+6) AI API Keys
+
+- New reusable credentials store for AI providers available in Settings > AI API Keys.
+- Supported providers and defaults:
+  - Perplexity — Base URL: https://api.perplexity.ai
+  - Mistral — Base URL: https://api.mistral.ai
+  - OpenAI — Base URL: https://api.openai.com; optional fields: Organization Id, Project Id
+- Backend REST endpoints (Quarkus):
+  - GET /api/ai-keys — list stored keys (secrets masked as preview)
+  - GET /api/ai-keys/{id} — fetch one key with full `apiKey` (for edit UI only)
+  - POST /api/ai-keys — create a key `{ provider, name, baseUrl, apiKey, organizationId?, projectId? }`
+  - PUT /api/ai-keys/{id} — update
+  - DELETE /api/ai-keys/{id} — delete
+- Persistence (Liquibase/H2):
+  - Table `AiApiKey` with fields: id, provider, name, baseUrl, apiKey, organizationId, projectId, createdAt
+  - ChangeSet id: `11-ai-api-keys`
+- Notes:
+  - Secrets are never returned fully; only a `keyPreview` is exposed by the API.
+  - These keys are independent from LLM model configs and can be referenced by future sessions/features.
+
+7) Verified Example (created and removed during this update)
 
 - A minimal JUnit test (QuickSanityTest) under backend/src/test/java/org/jaalon/smoke was created, executed successfully via Gradle on Windows, and then removed to keep the repository clean. The code snippet above is the exact content used.
 
-Last verified on: 2025-10-18 (Windows, PowerShell)
+Last verified on: 2025-11-09 (Windows, PowerShell)

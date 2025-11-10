@@ -10,8 +10,6 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ## Settings
 
-* Séparer la gestion des clés de la gestion des modèles histoire d’éviter d’avoir à ajouter à chaque fois la clé à utiliser.
-* revoir la présentation des llms, afficher juste le nom
 * Prompt directives -> champ texte plus grand
 
 ## Fonctionnalités
