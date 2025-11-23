@@ -8,17 +8,23 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 # Next
 
-## Settings
+* Ajout d’une clé perplexity : erreur à la sauvegarde...
+* Mettre une Techwatch en active, ajouter un article, la remettre en planned et metter une autre
+* La catégorie des liens dans une techwatch semble changer lorsque la catégorie par défaut n’a pas été fixée manuellement
+* Pagination des links
 
-* Prompt directives -> champ texte plus grand
+# Backlog
+
+## Bug
 
 ## Fonctionnalités
 
 * Importer les techwatch depuis une page Notion
+* Importer les techwatch depuis une page wiki (confluence)
+
 
 ## Links
 
-* Supprimer le ® de la liste des liens
 * Ajouter un bouton pour voir les techwatch auxquelles un lien a été ajouté
 
 ## Architecture
@@ -27,15 +33,12 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ## Techwatch
 
+* Une techwatch peut voir la description s’un link surchargé pour juste cette techwatch
 * Réorganiser l’ordre des catégories par drag&drop
 
-# Plus tard
+## Settings
 
-## Fonctionnalités
-
-* Importer les techwatch depuis une page Notion
-* Importer les techwatch depuis une page wiki (confluence)
-* Importer/Exporter la base de données
+* Prompt directives -> champ texte plus grand
 
 ## Workflow
 
@@ -58,4 +61,4 @@ Document listant les retours généraux de l’utilisateur. Sera utilisé pour c
 
 ## Environnement de dev
 
-* quarkus dev devrait lancer le backend d’un côté et le frontend de l’autre. techwatch.properties ne devrait être créé que pour le mode prod (pas le mode dev).
+* gradle dev devrait lancer le backend d’un côté et le frontend de l’autre. techwatch.properties ne devrait être créé que pour le mode prod (pas le mode dev).

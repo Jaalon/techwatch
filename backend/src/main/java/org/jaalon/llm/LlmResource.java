@@ -1,5 +1,7 @@
 package org.jaalon.llm;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -17,6 +19,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -139,6 +142,69 @@ public class LlmResource {
             return status(502).entity("Upstream error: HTTP " + code).build();
         } catch (Exception e) {
             return status(502).entity("Failed to fetch models: " + e.getMessage()).build();
+        }
+    }
+
+    @GET
+    @Path("/models")
+    public Response listModels(@QueryParam("aiApiKeyId") Long aiApiKeyId) {
+        if (aiApiKeyId == null) {
+            throw new BadRequestException("aiApiKeyId is required");
+        }
+
+        AiApiKey aiApiKey = aiApiKeyRepository.findById(aiApiKeyId);
+        if (aiApiKey == null) {
+            throw new NotFoundException("API key not found");
+        }
+
+        // Fallback: try to query the upstream /v1/models and normalize to { models: [...] }
+        try {
+            String baseUrl = aiApiKey.baseUrl;
+            String apiKey = aiApiKey.apiKey;
+            // If baseUrl is missing or not an HTTP(S) URL, do not attempt a network call
+            if (baseUrl == null || baseUrl.isBlank()) {
+                return ok(Map.of("models", List.of())).build();
+            }
+            String lower = baseUrl.toLowerCase();
+            if (!(lower.startsWith("http://") || lower.startsWith("https://"))) {
+                return ok(Map.of("models", List.of())).build();
+            }
+            String url = (baseUrl.endsWith("/")) ? (baseUrl + "v1/models") : (baseUrl + "/v1/models");
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(url))
+                    .header("Authorization", "Bearer " + (apiKey == null ? "" : apiKey))
+                    .GET()
+                    .build();
+            HttpClient httpClient = HttpClient.newHttpClient();
+            HttpResponse<String> httpResponse = httpClient.send(httpRequest, BodyHandlers.ofString(java.nio.charset.StandardCharsets.UTF_8));
+            int code = httpResponse.statusCode();
+            String body = httpResponse.body();
+            if (code != 200) {
+                return status(502).entity(Map.of("models", List.of())).build();
+            }
+
+            // Try to parse common shapes
+            try {
+                ObjectMapper om = new ObjectMapper();
+                JsonNode root = om.readTree(body);
+                List<String> names = new ArrayList<>();
+                if (root.has("data") && root.get("data").isArray()) {
+                    for (JsonNode n : root.get("data")) {
+                        if (n.has("id")) names.add(n.get("id").asText());
+                        else if (n.has("name")) names.add(n.get("name").asText());
+                    }
+                } else if (root.has("models") && root.get("models").isArray()) {
+                    for (JsonNode n : root.get("models")) {
+                        names.add(n.asText());
+                    }
+                }
+                return ok(Map.of("models", names)).build();
+            } catch (Exception parseEx) {
+                // If parsing fails, still return an empty list instead of raw body
+                return ok(Map.of("models", List.of())).build();
+            }
+        } catch (Exception e) {
+            return status(502).entity(Map.of("models", List.of())).build();
         }
     }
 }

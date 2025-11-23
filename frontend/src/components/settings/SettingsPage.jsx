@@ -3,6 +3,7 @@ import IAModelSettingsComponent from './IAModelSettingsComponent.jsx'
 import PromptDirectivesComponent from './PromptDirectivesComponent'
 import PageHeader from '../general/PageHeader'
 import AiApiKeysSection from './AiApiKeysSection.jsx'
+import ImportExportComponent from './ImportExportComponent.jsx'
 
 export default function SettingsPage() {
   return (
@@ -11,6 +12,7 @@ export default function SettingsPage() {
       <AiApiKeysSection />
       <IAModelSettingsComponent />
       <PromptDirectivesComponent />
+      <ImportExportComponent />
     </div>
   )
 }
