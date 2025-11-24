@@ -1,4 +1,4 @@
-package org.jaalon.config;
+package org.jaalon.promptinstruction;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;

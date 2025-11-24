@@ -1,4 +1,4 @@
-package org.jaalon.api;
+package org.jaalon.exchange.dto;
 
 import java.util.Map;
 

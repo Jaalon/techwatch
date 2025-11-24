@@ -1,11 +1,9 @@
-package org.jaalon.api;
+package org.jaalon.promptinstruction;
 
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import org.jaalon.config.PromptInstruction;
-import org.jaalon.config.PromptInstructionRepository;
 
 @Path("/api/instructions")
 @Produces(MediaType.APPLICATION_JSON)

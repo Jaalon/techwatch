@@ -1,4 +1,4 @@
-package org.jaalon.api;
+package org.jaalon.config;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;

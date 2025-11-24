@@ -1,4 +1,4 @@
-package org.jaalon.config;
+package org.jaalon.promptinstruction;
 
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;

@@ -2,8 +2,8 @@ package org.jaalon.links;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.jaalon.config.PromptInstruction;
-import org.jaalon.config.PromptInstructionRepository;
+import org.jaalon.promptinstruction.PromptInstruction;
+import org.jaalon.promptinstruction.PromptInstructionRepository;
 import org.jaalon.llm.LlmClient;
 import org.jaalon.llm.LlmConfig;
 import org.jaalon.llm.LlmConfigRepository;

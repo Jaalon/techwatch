@@ -1,11 +1,11 @@
-package org.jaalon.data;
+package org.jaalon.exchange;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
-import org.jaalon.api.DataExchangeResource;
-import org.jaalon.config.PromptInstruction;
-import org.jaalon.config.PromptInstructionRepository;
+import jakarta.transaction.Transactional;
+import org.jaalon.promptinstruction.PromptInstruction;
+import org.jaalon.promptinstruction.PromptInstructionRepository;
 import org.jaalon.links.Link;
 import org.jaalon.links.LinkRepository;
 import org.jaalon.tags.Tag;
@@ -67,22 +67,22 @@ class DataExchangeResourceTest {
                 .then().statusCode(200)
                 .extract().asByteArray();
         Set<String> techNames = zipEntryNames(techZip);
-        assertTrue(techNames.contains(DataExchangeResource.FILE_API_KEYS));
-        assertTrue(techNames.contains(DataExchangeResource.FILE_LLM_CONFIGS));
-        assertTrue(techNames.contains(DataExchangeResource.FILE_PROMPTS));
+        assertTrue(techNames.contains(DataExchangeFiles.API_KEYS.fileName()));
+        assertTrue(techNames.contains(DataExchangeFiles.LLM_CONFIGS.fileName()));
+        assertTrue(techNames.contains(DataExchangeFiles.PROMPTS.fileName()));
 
         byte[] funcZip = given().when()
                 .get("/api/data-exchange/export/functional")
                 .then().statusCode(200)
                 .extract().asByteArray();
         Set<String> funcNames = zipEntryNames(funcZip);
-        assertTrue(funcNames.contains(DataExchangeResource.FILE_LINKS));
-        assertTrue(funcNames.contains(DataExchangeResource.FILE_TECHWATCHES));
-        assertTrue(funcNames.contains(DataExchangeResource.FILE_TAGS));
+        assertTrue(funcNames.contains(DataExchangeFiles.LINKS.fileName()));
+        assertTrue(funcNames.contains(DataExchangeFiles.TECHWATCHES.fileName()));
+        assertTrue(funcNames.contains(DataExchangeFiles.TAGS.fileName()));
     }
 
     @Test
-    @jakarta.transaction.Transactional
+    @Transactional
     void analyze_detectsPromptInstructionConflictOnStringId() throws Exception {
         // Seed an instruction with type "summary"
         PromptInstruction pi = new PromptInstruction();
@@ -92,7 +92,7 @@ class DataExchangeResourceTest {
 
         // Incoming ZIP with conflicting same id but different content
         String promptsJson = "[ {\"type\":\"summary\", \"content\":\"B\"} ]";
-        byte[] zip = zipOf(DataExchangeResource.FILE_PROMPTS, promptsJson);
+        byte[] zip = zipOf(DataExchangeFiles.PROMPTS.fileName(), promptsJson);
 
         given().contentType("application/zip").body(zip)
         .when().post("/api/data-exchange/import/analyze")
@@ -102,7 +102,7 @@ class DataExchangeResourceTest {
     }
 
     @Test
-    @jakarta.transaction.Transactional
+    @Transactional
     void execute_demotesImportedActiveTechWatchIfOneExists() throws Exception {
         // Pre-exist an ACTIVE techwatch
         TechWatch active = new TechWatch();
@@ -114,7 +114,7 @@ class DataExchangeResourceTest {
         // Import another ACTIVE techwatch on another date
         LocalDate importedDate = LocalDate.now().plusDays(1);
         String twJson = "[ {\"date\":\"" + importedDate + "\", \"status\":\"ACTIVE\", \"maxArticles\": 8, \"linkUrls\": [] } ]";
-        byte[] zip = zipOf(DataExchangeResource.FILE_TECHWATCHES, twJson);
+        byte[] zip = zipOf(DataExchangeFiles.TECHWATCHES.fileName(), twJson);
 
         given().contentType("application/zip").body(zip)
         .when().post("/api/data-exchange/import/execute")
@@ -126,7 +126,7 @@ class DataExchangeResourceTest {
     }
 
     @Test
-    @jakarta.transaction.Transactional
+    @Transactional
     void tags_areImportedAndLinkedToLinks() throws Exception {
         // Prepare ZIP with tags and one link using them
         String tagsJson = "[ {\"name\":\"java\"}, {\"name\":\"ai\"} ]";
@@ -134,10 +134,10 @@ class DataExchangeResourceTest {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-            zos.putNextEntry(new ZipEntry(DataExchangeResource.FILE_TAGS));
+            zos.putNextEntry(new ZipEntry(DataExchangeFiles.TAGS.fileName()));
             zos.write(tagsJson.getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
-            zos.putNextEntry(new ZipEntry(DataExchangeResource.FILE_LINKS));
+            zos.putNextEntry(new ZipEntry(DataExchangeFiles.LINKS.fileName()));
             zos.write(linksJson.getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
         }
@@ -157,31 +157,30 @@ class DataExchangeResourceTest {
     }
 
     // Helper to persist within a transaction
-    @jakarta.transaction.Transactional
-    PromptInstruction seedPrompt(String type, String content) {
-            PromptInstruction existing = promptRepo.findById(type);
+    @Transactional
+    void seedPrompt() {
+            PromptInstruction existing = promptRepo.findById("summarize");
             if (existing == null) {
                 PromptInstruction pi = new PromptInstruction();
-                pi.type = type;
-                pi.content = content;
+                pi.type = "summarize";
+                pi.content = "A";
                 promptRepo.persist(pi);
-                return pi;
             } else {
-                existing.content = content;
-                return existing;
+                existing.content = "A";
             }
     }
 
     @Test
     void resolveOne_updatesPromptInstruction() {
         // Seed existing prompt with content A in its own transaction
-        seedPrompt("summarize", "A");
+        seedPrompt();
 
-        String payload = "{\n" +
-                "  \"entity\": \"PromptInstruction\",\n" +
-                "  \"key\": \"summarize\",\n" +
-                "  \"data\": { \"content\": \"B\" }\n" +
-                "}";
+        String payload = """
+                {
+                  "entity": "PromptInstruction",
+                  "key": "summarize",
+                  "data": { "content": "B" }
+                }""";
 
         given().contentType(ContentType.JSON).body(payload)
                 .when().post("/api/data-exchange/import/resolve")

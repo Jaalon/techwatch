@@ -1,4 +1,4 @@
-package org.jaalon.api;
+package org.jaalon.exchange.dto;
 
 import java.time.LocalDate;
 import java.util.Set;

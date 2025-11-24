@@ -1,5 +1,4 @@
 plugins {
-    //id("io.quarkus") version "3.18.3" apply false
 }
 
 allprojects {
@@ -21,7 +20,7 @@ tasks.register("devAll") {
 tasks.register("prodBuild") {
     group = "build"
     description = "Build frontend, copy assets into backend, and produce Quarkus native image including static resources"
-    dependsOn(":frontend:build", ":backend:copyFrontend", "backend:quarkusBuild")
+    dependsOn(":browser-extension:build", ":frontend:build", ":backend:copyFrontend", "backend:quarkusBuild")
 }
 
 
@@ -34,7 +33,7 @@ val downloadWinSW by tasks.registering {
     val targetDir = layout.buildDirectory.dir("package")
     outputs.file(targetDir.map { it.file("WinSW-x64.exe") })
     doLast {
-        val url = java.net.URL("https://github.com/winsw/winsw/releases/latest/download/WinSW-x64.exe")
+        val url = uri("https://github.com/winsw/winsw/releases/latest/download/WinSW-x64.exe").toURL()
         val outDir = targetDir.get().asFile
         if (!outDir.exists()) outDir.mkdirs()
         val outFile = targetDir.get().file("WinSW-x64.exe").asFile

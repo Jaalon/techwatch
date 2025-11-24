@@ -1,3 +1,3 @@
-package org.jaalon.api;
+package org.jaalon.exchange.dto;
 
 public record TagExport(String name) {}
