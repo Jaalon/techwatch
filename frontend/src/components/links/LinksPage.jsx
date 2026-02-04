@@ -33,6 +33,10 @@ export default function LinksPage() {
   }
 
   useEffect(() => {
+    setPage(0)
+  }, [query, status, sort, showAll])
+
+  useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, status, page, size, sort, showAll])
@@ -126,6 +130,10 @@ export default function LinksPage() {
         onAssignNext={assignToNext}
         onDelete={remove}
         onEdited={load}
+        page={page}
+        setPage={setPage}
+        size={size}
+        total={total}
       />
     </div>
   </div>

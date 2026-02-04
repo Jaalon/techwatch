@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import TechWatchItem from './TechWatchItem'
+import Pagination from '../general/Pagination'
 
 function TechWatchList({ items, onOpen, max = 5, pageSize }) {
   const size = pageSize ?? max
@@ -12,7 +13,7 @@ function TechWatchList({ items, onOpen, max = 5, pageSize }) {
   const [sortKey, setSortKey] = useState('date') // 'date' | 'status'
   const [sortDir, setSortDir] = useState('desc') // 'asc' | 'desc'
 
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(0)
 
   const uniqueStatuses = useMemo(() => {
     const s = new Set()
@@ -37,9 +38,12 @@ function TechWatchList({ items, onOpen, max = 5, pageSize }) {
       if (statusFilter && String(it?.status) !== statusFilter) return false
       // date range filter (inclusive)
       const dt = parseDate(it?.date)
-      if (fromDateObj && (!dt || dt < new Date(fromDate + 'T00:00:00'))) return false
-      if (toDateObj && (!dt || dt > new Date(toDate + 'T23:59:59'))) return false
-      return true
+      if (!(fromDateObj && (!dt || dt < new Date(fromDate + 'T00:00:00')))) {
+        return !(toDateObj && (!dt || dt > new Date(toDate + 'T23:59:59')));
+      } else {
+        return false
+      }
+
     })
 
     arr.sort((a, b) => {
@@ -63,26 +67,27 @@ function TechWatchList({ items, onOpen, max = 5, pageSize }) {
 
   const total = filteredSortedItems.length
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, size)))
-  const clampedPage = Math.min(page, totalPages)
-  const start = (clampedPage - 1) * size
+  const clampedPage = Math.min(page, totalPages - 1)
+  const safeClampedPage = Math.max(0, clampedPage)
+  const start = safeClampedPage * size
   const end = start + size
   const list = filteredSortedItems.slice(start, end)
 
   useEffect(() => {
     // Reset page if items shrink or pageSize/filters change so that page stays in range
     const newTotalPages = Math.max(1, Math.ceil(total / Math.max(1, size)))
-    if (page > newTotalPages) {
-      setPage(newTotalPages)
+    if (page >= newTotalPages) {
+      setPage(Math.max(0, newTotalPages - 1))
     }
-    if (total === 0 && page !== 1) {
-      setPage(1)
+    if (total === 0 && page !== 0) {
+      setPage(0)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [total, size])
 
-  // When filters change, go back to page 1 for better UX
+  // When filters change, go back to page 0 for better UX
   useEffect(() => {
-    setPage(1)
+    setPage(0)
   }, [statusFilter, fromDate, toDate, sortKey, sortDir])
 
   return (
@@ -136,40 +141,17 @@ function TechWatchList({ items, onOpen, max = 5, pageSize }) {
         </ul>
       </section>
 
-      <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-        <div>
-          {total > 0 ? (
-            <span>
-              Affichage {start + 1}-{Math.min(end, total)} sur {total}
-            </span>
-          ) : (
-            <span>Aucun élément</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="tw-btn text-xs"
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={clampedPage <= 1}
-            title="Précédent"
-          >
-            ◀
-          </button>
-          <span>
-            Page {clampedPage} / {totalPages}
-          </span>
-          <button
-            type="button"
-            className="tw-btn"
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={clampedPage >= totalPages}
-            title="Suivant"
-          >
-            ▶
-          </button>
-        </div>
-      </div>
+      <Pagination
+        page={safeClampedPage}
+        size={size}
+        total={total}
+        onPageChange={setPage}
+        showingLabel="Affichage"
+        ofLabel="sur"
+        noItemsLabel="Aucun élément"
+        previousTitle="Précédent"
+        nextTitle="Suivant"
+      />
     </div>
   )
 }
