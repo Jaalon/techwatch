@@ -14,19 +14,19 @@ Dev/run/build
 - Dev mode: from project root
   - cd backend
   - .\gradlew.bat quarkusDev
-  - Service available at http://localhost:8080
+  - Service available at http://localhost:8080 (override possible via backend/techwatch.properties)
 - Build (JAR):
   - cd backend
   - .\gradlew.bat build
 
 Runtime configuration (application.yaml highlights)
-- Port: quarkus.http.port: 8080
+- Port: quarkus.http.port: 8080 (can be overridden in backend/techwatch.properties)
 - CORS: enabled=true; origins="*" (frontend/dev and browser extension calls are allowed)
-- OpenAPI: quarkus.smallrye-openapi.path: /openapi; UI alias at /swagger if the SmallRye OpenAPI UI is enabled
+- OpenAPI: quarkus.smallrye-openapi.path: /openapi; Swagger UI at /q/swagger-ui if enabled
 - DB: H2 file database at jdbc:h2:file:./var/techwatch (username sa, empty password)
   - Liquibase migrates at start: db/changelog/db.changelog-master.yaml
   - If schema issues occur locally, you can stop the app and remove the local DB file under var/techwatch, then restart to re-apply migrations
-- Logging: default INFO; org.hibernate.SQL also INFO (SQL visible during tests/dev)
+- Logging: default INFO; SQL logs are OFF by default and ON in dev profile (quarkus.hibernate-orm.log.sql)
 
 Notes
 - No external DB services required to run tests; H2 file DB is used.
@@ -87,7 +87,7 @@ Dev and build
 - Dev server:
   - cd frontend
   - npm ci
-  - npm run dev  (http://localhost:5173)
+  - npm run dev  (http://localhost:3000)
 - Build:
   - cd frontend
   - npm ci
@@ -106,7 +106,7 @@ Build
 
 5) Additional Development/Debugging Notes
 
-- API exploration: use /openapi for the OpenAPI document; Swagger UI may be available at /swagger depending on SmallRye configuration.
+- API exploration: use /openapi for the OpenAPI document; Swagger UI is available at /q/swagger-ui when enabled.
 - CORS is permissive for local dev; when hardening for prod, review quarkus.http.cors settings.
 - SQL visibility: org.hibernate.SQL logging is INFO; leverage logs to debug queries in tests.
 - Data location: local H2 DB persists under var/techwatch relative to backend; safe to delete locally between runs.
@@ -139,4 +139,4 @@ Build
 
 - A minimal JUnit test (QuickSanityTest) under backend/src/test/java/org/jaalon/smoke was created, executed successfully via Gradle on Windows, and then removed to keep the repository clean. The code snippet above is the exact content used.
 
-Last verified on: 2025-11-09 (Windows, PowerShell)
+Last verified on: 2025-11-24 (Windows, PowerShell)

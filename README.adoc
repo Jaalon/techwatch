@@ -97,6 +97,8 @@ NOTE: On Linux/macOS, use `./gradlew quarkusDev`
 
 The backend will start on *http://localhost:8080*
 
+NOTE: You can override the backend HTTP port via `backend/techwatch.properties` (property `quarkus.http.port`).
+
 NOTE: On Windows, use `gradlew.bat` instead of `./gradlew`
 
 === Step 3: Frontend Setup
@@ -110,7 +112,7 @@ npm install
 npm run dev
 ----
 
-The frontend will start on *http://localhost:5173*
+The frontend will start on *http://localhost:3000*
 
 === Step 4: Browser Extension Setup
 
@@ -516,7 +518,14 @@ NOTE: On Linux/macOS, use `./gradlew` for the above commands.
 == API and Docs
 
 - OpenAPI document: http://localhost:8080/openapi
-- Swagger UI: http://localhost:8080/swagger (if enabled)
+- Swagger UI: http://localhost:8080/q/swagger-ui (if enabled)
+
+- AI API Keys endpoints (credentials store):
+* `GET /api/ai-keys` — list stored keys (secrets masked via `keyPreview`)
+* `GET /api/ai-keys/{id}` — fetch one key with full `apiKey` (for edit UI only)
+* `POST /api/ai-keys` — create `{ provider, name, baseUrl, apiKey, organizationId?, projectId? }`
+* `PUT /api/ai-keys/{id}` — update
+* `DELETE /api/ai-keys/{id}` — delete
 
 ---
 
