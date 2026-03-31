@@ -31,7 +31,7 @@ public class LinkExporter implements DataExporter {
             if (l.tags != null) {
                 for (Tag tag : l.tags) t.add(tag.name);
             }
-            out.add(new LinkExport(l.title, l.url, l.description, l.summary, t));
+            out.add(new LinkExport(l.title, l.url, l.description, l.summary, l.status == null ? null : l.status.name(), t));
         }
         return out;
     }

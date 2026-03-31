@@ -33,6 +33,7 @@ public class LinkConflictAnalyzer implements ConflictAnalyzer {
                     ex.put("title", existing.title);
                     ex.put("description", existing.description);
                     ex.put("summary", existing.summary);
+                    ex.put("status", existing.status == null ? null : existing.status.name());
                     ex.put("tags", exTags);
 
                     Map<String, Object> incomingMap = new LinkedHashMap<>();
@@ -40,6 +41,7 @@ public class LinkConflictAnalyzer implements ConflictAnalyzer {
                     incomingMap.put("title", exportedLink.title());
                     incomingMap.put("description", exportedLink.description());
                     incomingMap.put("summary", exportedLink.summary());
+                    incomingMap.put("status", exportedLink.status());
                     incomingMap.put("tags", new LinkedHashSet<>(exportedLink.tags() == null ? Set.of() : exportedLink.tags()));
 
                     if (!Objects.equals(ex, incomingMap)) {

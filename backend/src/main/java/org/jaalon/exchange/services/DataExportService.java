@@ -74,10 +74,11 @@ public class DataExportService {
                     String title = valueAsString(it.data(), "title");
                     String desc = valueAsString(it.data(), "description");
                     String sum = valueAsString(it.data(), "summary");
+                    String status = valueAsString(it.data(), "status");
                     Set<String> t = new LinkedHashSet<>();
                     Object to = it.data() != null ? it.data().get("tags") : null;
                     if (to instanceof Collection<?> col) for (Object o : col) if (o != null) t.add(String.valueOf(o));
-                    links.add(new LinkExport(title, it.key(), desc, sum, t));
+                    links.add(new LinkExport(title, it.key(), desc, sum, status, t));
                 }
                 case "TechWatch" -> {
                     LocalDate d = LocalDate.parse(it.key());

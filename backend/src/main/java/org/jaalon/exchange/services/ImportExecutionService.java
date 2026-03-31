@@ -11,6 +11,7 @@ import org.jaalon.promptinstruction.PromptInstructionRepository;
 import org.jaalon.exchange.dto.*;
 import org.jaalon.links.Link;
 import org.jaalon.links.LinkRepository;
+import org.jaalon.links.LinkStatus;
 import org.jaalon.tags.Tag;
 import org.jaalon.tags.TagRepository;
 import org.jaalon.techwatch.TechWatch;
@@ -82,6 +83,10 @@ public class ImportExecutionService {
                 link.title = valueAsString(req.data(), "title");
                 link.description = valueAsString(req.data(), "description");
                 link.summary = valueAsString(req.data(), "summary");
+                String status = valueAsString(req.data(), "status");
+                if (status != null) {
+                    link.status = LinkStatus.valueOf(status);
+                }
                 Object tagsObj = req.data() != null ? req.data().get("tags") : null;
                 if (tagsObj instanceof Collection<?> col) {
                     LinkedHashSet<Tag> newTags = new LinkedHashSet<>();
@@ -110,10 +115,9 @@ public class ImportExecutionService {
                     LinkedHashSet<String> desired = new LinkedHashSet<>();
                     for (Object o : col) if (o != null) desired.add(String.valueOf(o));
 
+                    List<Link> linksOfTw = linkRepository.find("select l from Link l join l.techWatches tw where tw.id = ?1", tw.id).list();
                     LinkedHashSet<String> current = new LinkedHashSet<>();
-                    for (Link l : linkRepository.listAll()) {
-                        if (l.techWatches != null && l.techWatches.contains(tw)) current.add(l.url);
-                    }
+                    for (Link l : linksOfTw) current.add(l.url);
 
                     for (String url : desired) {
                         if (!current.contains(url)) {
@@ -124,15 +128,14 @@ public class ImportExecutionService {
                                 l.title = url; // minimal title
                                 linkRepository.persist(l);
                             }
-                            if (l.techWatches == null) l.techWatches = new LinkedHashSet<>();
+                            if (l.techWatches == null) l.techWatches = new HashSet<>();
                             l.techWatches.add(tw);
                         }
                     }
 
-                    for (String url : current) {
-                        if (!desired.contains(url)) {
-                            Link l = linkRepository.find("url", url).firstResult();
-                            if (l != null && l.techWatches != null) {
+                    for (Link l : linksOfTw) {
+                        if (!desired.contains(l.url)) {
+                            if (l.techWatches != null) {
                                 l.techWatches.remove(tw);
                             }
                         }
@@ -222,11 +225,17 @@ public class ImportExecutionService {
                     link.url = le.url();
                     link.description = le.description();
                     link.summary = le.summary();
+                    if (le.status() != null) {
+                        link.status = LinkStatus.valueOf(le.status());
+                    }
                     linkRepository.persist(link);
                 } else {
                     link.title = le.title();
                     link.description = le.description();
                     link.summary = le.summary();
+                    if (le.status() != null) {
+                        link.status = LinkStatus.valueOf(le.status());
+                    }
                 }
                 if (le.tags() != null) {
                     LinkedHashSet<Tag> newTags = new LinkedHashSet<>();
@@ -260,6 +269,12 @@ public class ImportExecutionService {
                     tw.maxArticles = te.maxArticles();
                 }
                 if (te.linkUrls() != null) {
+                    // Note: We need to clear existing associations from the link side because Link is the owning side
+                    List<Link> currentLinks = linkRepository.find("select l from Link l join l.techWatches tw where tw.id = ?1", tw.id).list();
+                    for (Link l : currentLinks) {
+                        l.techWatches.remove(tw);
+                    }
+
                     for (String url : te.linkUrls()) {
                         Link link = linkRepository.find("url", url).firstResult();
                         if (link != null) {

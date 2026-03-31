@@ -28,11 +28,10 @@ public class TechWatchConflictAnalyzer implements ConflictAnalyzer {
             for (TechWatchExport te : techWatchList) {
                 TechWatch existing = techWatchRepository.find("date", te.date()).firstResult();
                 if (existing != null) {
+                    List<Link> linksOfTw = linkRepository.find("select l from Link l join l.techWatches tw where tw.id = ?1", existing.id).list();
                     LinkedHashSet<String> exUrls = new LinkedHashSet<>();
-                    for (Link l : linkRepository.listAll()) {
-                        if (l.techWatches != null && l.techWatches.contains(existing)) {
-                            exUrls.add(l.url);
-                        }
+                    for (Link l : linksOfTw) {
+                        exUrls.add(l.url);
                     }
 
                     Map<String, Object> ex = new LinkedHashMap<>();

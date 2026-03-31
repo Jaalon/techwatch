@@ -29,11 +29,10 @@ public class TechWatchExporter implements DataExporter {
     public Object exportData() {
         List<TechWatchExport> out = new ArrayList<>();
         for (TechWatch tw : techWatchRepository.listAll()) {
+            List<Link> links = linkRepository.find("select l from Link l join l.techWatches tw where tw.id = ?1", tw.id).list();
             Set<String> urls = new LinkedHashSet<>();
-            for (Link l : linkRepository.listAll()) {
-                if (l.techWatches != null && l.techWatches.contains(tw)) {
-                    urls.add(l.url);
-                }
+            for (Link l : links) {
+                urls.add(l.url);
             }
             out.add(new TechWatchExport(tw.date, tw.status == null ? null : tw.status.name(), tw.maxArticles, urls));
         }
