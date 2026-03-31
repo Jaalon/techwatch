@@ -1,0 +1,53 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "dmr": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Docker Model Runner",
+      "options": {
+        "baseURL": "http://localhost:12434/v1"
+      },
+      "models": {
+        "qwen3-coder": {
+          "name": "ai/qwen3-coder"
+        },
+        "devstral-small-2": {
+          "name": "ai/devstral-small-2"
+        }
+      }
+    }
+  },
+  "model": "dmr/qwen3-coder",
+  "small_model": "dmr/devstral-small-2",
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "searxng": {
+      "type": "local",
+      "command": ["node", "searxng-mcp.js"],
+      "environment": {
+        "SEARXNG_URL": "http://localhost:18888"
+      }
+    },
+    "fetch": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-fetch"]
+    }
+  },
+  "permission": {
+    "bash": {
+      "git add *": "deny",
+      "git add .": "deny",
+      "git add .*": "deny",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "git push": "deny",
+      "gh pr create *": "deny",
+      "gh pr create": "deny",
+      "gh issue create *": "deny",
+      "gh issue create": "deny"
+    }
+  }
+}
